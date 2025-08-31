@@ -2,6 +2,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 import "./../global.css"
 import { useRouter } from "expo-router";
 
+
 export default function Index() {
 
   const router = useRouter();
@@ -11,7 +12,7 @@ export default function Index() {
       <Text className="text-white text-lg font-bold">
         Edit app/index.tsx to edit this screen.
       </Text>
-      <TouchableOpacity onPress={() => router.push("/testing")}>
+      <TouchableOpacity onPress={() => router.push("/(tabs)/home")}>
         <Text>
           change router
         </Text>
