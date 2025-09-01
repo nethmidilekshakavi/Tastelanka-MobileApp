@@ -13,6 +13,10 @@ import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import { login } from "@/services/authService";
 import { Video } from "expo-av"; // <-- import Video from expo-av
+// @ts-ignore
+import videoFile from "../../assets/vidios/PinDown.io_@kamkumarasinghe_1756743322.mp4";
+// import image from "../../assets/images/fac132dbf73ecd95071f6da669ce7f15.jpg";
+
 
 const LoginScreen = () => {
     const router = useRouter();
@@ -143,16 +147,26 @@ const LoginScreen = () => {
                     </Text>
                 </Pressable>
 
-                {/* Video */}
+                 Video
                 <View className="mt-4 w-full h-48">
                     <Video
-                        source={{ uri: "4ade80../" }} // replace with your video
-                        style={{ width: "100%", height: "137%", borderRadius: 12 }}
+                        source={videoFile}      // use local video
+                        style={{ width: "100%", height: 230,  borderRadius: 12 }}
                         useNativeControls
                         resizeMode="cover"
                         isLooping
+                        shouldPlay              // auto play
                     />
+
                 </View>
+                {/*<View className="mt-4 w-full h-48">*/}
+                {/*    <Image*/}
+                {/*        source={image} // replace with your local image path*/}
+                {/*        style={{ width: "100%", height: 260, borderRadius: 12 }}*/}
+                {/*        resizeMode="cover" // cover ensures the image fills the view nicely*/}
+                {/*    />*/}
+                {/*</View>*/}
+
             </View>
         </View>
     );
