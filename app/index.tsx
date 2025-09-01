@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, ImageBackground, StyleSheet, Dimensions } from 'react-native';
-import "./../global.css"
 import { useRouter } from "expo-router";
+
 
 
 export default function Index() {
@@ -56,7 +56,7 @@ export default function Index() {
           {/* Get Started Button */}
           <TouchableOpacity 
             style={styles.getStartedButton}
-            onPress={() => router.push("/(tabs)/home")}
+            onPress={() => router.push("/(auth)/login")}
             activeOpacity={0.8}
           >
             <Text style={styles.getStartedText}>Get Started</Text>

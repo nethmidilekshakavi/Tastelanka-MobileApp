@@ -1,109 +1,80 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
-import React, { useState } from 'react';
-import { useRouter } from 'expo-router';
-import {useAuth} from '@/context/AuthContext'
-
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Pressable,
+  Alert,
+  ActivityIndicator
+} from "react-native"
+import React, { useState } from "react"
+import { useRouter } from "expo-router"
 
 const Login = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const router = useRouter(); 
+  const router = useRouter()
+  const [email, setEmail] = useState<string>("")
+  const [password, setPasword] = useState<string>("")
+  const [isLodingReg, setIsLoadingReg] = useState<boolean>(false)
 
+  const handleLogin = async () => {
+    // if(!email){
 
-  const{login} = useAuth()
-
-  const handleLogin = () => {
-    if(username === "admin" && password === "1234"){
-      router.replace("/home")
-    }
+    // }
+    //
+    if (isLodingReg) return
+    setIsLoadingReg(true)
+    await Login(email, password)
+      .then((res) => {
+        console.log(res)
+        router.push("/(tabs)/home")
+      })
+      .catch((err) => {
+        console.error(err)
+        Alert.alert("Login failed", "Somthing went wrong")
+        // import { Alert } from "react-native"
+      })
+      .finally(() => {
+        setIsLoadingReg(false)
+      })
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
-
+    <View className="flex-1 bg-gray-100 justify-center p-4">
+      <Text className="text-2xl font-bold mb-6 text-blue-600 text-center">
+        Login to Task Manager
+      </Text>
       <TextInput
-        style={styles.input}
-        placeholder="Username"
-        placeholderTextColor="#888"
-        value={username}
-        //onChange = n{(e)} => setUsername (e.target.value)
-        onChangeText={setUsername}
+        placeholder="Email"
+        className="bg-surface border border-gray-300 rounded px-4 py-3 mb-4 text-gray-900"
+        placeholderTextColor="#9CA3AF"
+        value={email}
+        onChangeText={setEmail}
       />
-
       <TextInput
-        style={styles.input}
         placeholder="Password"
-        placeholderTextColor="#888"
+        className="bg-surface border border-gray-300 rounded px-4 py-3 mb-4 text-gray-900"
+        placeholderTextColor="#9CA3AF"
         secureTextEntry
         value={password}
-        onChangeText={setPassword}
-        
+        onChangeText={setPasword}
       />
-
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Sign In</Text>
-        
-      </TouchableOpacity>
-
-      {/* <TouchableOpacity
-        onPress={() => router.push('')} // replace with your sign up route
+      <TouchableOpacity
+        className="bg-blue-500 p-4 rounded mt-2"
+        onPress={handleLogin}
       >
-        <Text style={styles.signupText}>
-          Don't have an account? <Text style={styles.signupLink}>Sign Up</Text>
+        {isLodingReg ? (
+          <ActivityIndicator color="#fff" size="large" />
+        ) : (
+          <Text className="text-center text-2xl text-white">Login</Text>
+        )}
+      </TouchableOpacity>
+      <Pressable onPress={() => router.push("/register")}>
+        <Text className="text-center text-blue-500 text-xl">
+          Don't have an account? Register
         </Text>
-      </TouchableOpacity> */}
+      </Pressable>
     </View>
-  );
-};
+  )
+}
 
-export default Login;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f2f2f2',
-    padding: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 30,
-    color: '#333',
-  },
-  input: {
-    width: '100%',
-    height: 50,
-    backgroundColor: '#fff',
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    marginBottom: 15,
-    fontSize: 16,
-    borderColor: '#ddd',
-    borderWidth: 1,
-  },
-  button: {
-    backgroundColor: '#ff7f50',
-    paddingVertical: 14,
-    paddingHorizontal: 40,
-    borderRadius: 10,
-    marginTop: 10,
-    elevation: 2,
-    marginBottom: 20,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  signupText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  signupLink: {
-    color: '#ff7f50',
-    fontWeight: 'bold',
-  },
-});
+export default Login
