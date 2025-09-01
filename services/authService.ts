@@ -1,5 +1,5 @@
 import { app } from "@/config/firebaseConfig";
-import { getAuth, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword } from "firebase/auth";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
@@ -10,9 +10,14 @@ const storage = getStorage(app);
 const DEFAULT_PROFILE_PIC =
   "https://firebasestorage.googleapis.com/v0/b/your-app-id.appspot.com/o/default_profile.png?alt=media";
 
+export const login = async (email: string, password: string) => {
+  const userCred = await signInWithEmailAndPassword(auth, email, password)
+  return userCred.user  
+}
 export const register = async (fullName: string, email: string, password: string, profilePic?: string | null) => {
   // create user
   const userCred = await createUserWithEmailAndPassword(auth, email, password);
+  
 
   // split name
   const [firstName, ...rest] = fullName.split(" ");

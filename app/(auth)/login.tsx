@@ -9,33 +9,28 @@ import {
 } from "react-native"
 import React, { useState } from "react"
 import { useRouter } from "expo-router"
+import { login } from "@/services/authService"
 
-const Login = () => {
+const LoginScreen = () => {
   const router = useRouter()
   const [email, setEmail] = useState<string>("")
-  const [password, setPasword] = useState<string>("")
-  const [isLodingReg, setIsLoadingReg] = useState<boolean>(false)
+  const [password, setPassword] = useState<string>("")
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const handleLogin = async () => {
-    // if(!email){
+    if (isLoading) return
+    setIsLoading(true)
 
-    // }
-    //
-    if (isLodingReg) return
-    setIsLoadingReg(true)
-    await Login(email, password)
-      .then((res) => {
-        console.log(res)
-        router.push("/(tabs)/home")
-      })
-      .catch((err) => {
-        console.error(err)
-        Alert.alert("Login failed", "Somthing went wrong")
-        // import { Alert } from "react-native"
-      })
-      .finally(() => {
-        setIsLoadingReg(false)
-      })
+    try {
+      const user = await login(email, password)   // <-- await here
+      console.log("Login success:", user)
+      router.push("/(tabs)/home")
+    } catch (err) {
+      console.error(err)
+      Alert.alert("Login failed", "Something went wrong")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -56,13 +51,13 @@ const Login = () => {
         placeholderTextColor="#9CA3AF"
         secureTextEntry
         value={password}
-        onChangeText={setPasword}
+        onChangeText={setPassword}
       />
       <TouchableOpacity
         className="bg-blue-500 p-4 rounded mt-2"
         onPress={handleLogin}
       >
-        {isLodingReg ? (
+        {isLoading ? (
           <ActivityIndicator color="#fff" size="large" />
         ) : (
           <Text className="text-center text-2xl text-white">Login</Text>
@@ -77,4 +72,4 @@ const Login = () => {
   )
 }
 
-export default Login
+export default LoginScreen
