@@ -31,7 +31,7 @@ const LoginScreen = () => {
         try {
             const user = await login(email, password);
             console.log("Login success:", user);
-            router.push("/(tabs)/home");
+            router.push("/(tabs)/Home");
         } catch (err) {
             console.error(err);
             Alert.alert("Login failed", "Something went wrong");
