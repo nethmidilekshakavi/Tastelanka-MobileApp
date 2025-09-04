@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 function TabLayout() {
     return (
@@ -9,8 +10,6 @@ function TabLayout() {
                 headerShown: false,
                 tabBarActiveTintColor: '#4CAF50',
                 tabBarInactiveTintColor: 'gray',
-
-
             }}
         >
             <Tabs.Screen
@@ -23,20 +22,29 @@ function TabLayout() {
                 }}
             />
             <Tabs.Screen
-                name="about"
+                name="Nitification"
                 options={{
-                    title: 'About',
+                    title: 'Nitification',
                     tabBarIcon: ({ color, size }) => (
-                        <MaterialIcons name="info-outline" size={size} color={color} />
+                        <AntDesign name="bells" size={size} color={color} />
                     ),
                 }}
             />
             <Tabs.Screen
-                name="profile"
+                name="About"
                 options={{
-                    title: 'Profile',
+                    title: 'About',
                     tabBarIcon: ({ color, size }) => (
-                        <FontAwesome name="user-o" size={size} color={color} />
+                        <Ionicons name="information-circle-outline" size={size} color={color} />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="Profile"
+                options={{
+                    title: 'Account',
+                    tabBarIcon: ({ color, size }) => (
+                        <AntDesign name="user" size={size} color={color} />
                     ),
                 }}
             />

@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect, useRef} from "react";
 import {
     View,
     Text,
@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     TextInput,
     StyleSheet,
+    Dimensions,
 } from "react-native";
 import { Search, Bell, Heart, Compass, Star, User } from "lucide-react-native";
 import { router } from "expo-router";
@@ -61,6 +62,7 @@ const Home = () => {
         },
     ];
 
+
     return (
         <View style={styles.container}>
             {/* Header */}
@@ -92,7 +94,6 @@ const Home = () => {
                 <TextInput placeholder="Search Any Recipe.." style={styles.searchInput} />
             </View>
 
-            <Text></Text>
 
             <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
                 {/* Categories */}
@@ -115,7 +116,7 @@ const Home = () => {
                     </ScrollView>
                 </View>
 
-                Text
+                <Text></Text>
 
                 {/* Popular Recipes */}
                 <View style={{ marginBottom: 20, paddingHorizontal: 20 ,height:370}}>
@@ -184,25 +185,25 @@ const styles = StyleSheet.create({
     categoryText: { color: "white", fontSize: 12, fontWeight: "bold" },
     recipeCard: {
         borderRadius: 12,
-        backgroundColor: "white",
+        backgroundColor: '#4CAF50', // light green background
         elevation: 3,
         overflow: "hidden",
-        width: 160,
-        height:270
+        width: 350,
+        height:220
     },
-    recipeImage: { width: "100%", height: 160 },
+    recipeImage: { width: "100%", height: 140 },
     recipeInfo: { padding: 10 },
-    recipeTitle: { fontWeight: "bold", fontSize: 16, marginBottom: 4 },
-    recipeMeta: { color: "gray", fontSize: 12 },
+    recipeTitle: { fontWeight: "bold", fontSize: 16, marginBottom: 4, color:"white" },
+    recipeMeta: { color: "white", fontSize: 12 },
     header: {
         flexDirection: "row",
-        top:"4%",
+        top:"5%",
         justifyContent: "space-between",
         alignItems: "center",
         paddingHorizontal: 20, // increase horizontal padding
         paddingVertical: 15,
         width: "100%", // make sure header takes full width
-        height:"17%",
+        height:"20%",
         borderTopEndRadius:"10%",
         borderTopStartRadius:"10%",
         backgroundColor: "#4CAF50", // example color
@@ -225,11 +226,13 @@ const styles = StyleSheet.create({
     },
     headerSub:{
         fontSize: 17,
+        top:10,
         fontWeight: "bold",
         color: "#fff",
     },
     headerSubtitle: {
         fontSize: 14,
+        top:10,
         color: "#fff",
     },
     notificationDot: {
@@ -240,6 +243,40 @@ const styles = StyleSheet.create({
         height: 10,
         borderRadius: 5,
         backgroundColor: "red",
+    },
+
+    text: {
+        color: '#fff',
+        fontSize: 24,
+    },
+    card: {
+        width: 200,
+        height: 150,
+        borderRadius: 20,
+        marginRight: 15,
+        backgroundColor: '#fff',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
+        elevation: 5,
+        overflow: 'hidden', // important to keep image inside rounded corners
+    },
+    image: {
+        width: '100%',
+        height: 180,
+    },
+    title: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginTop: 10,
+        marginHorizontal: 10,
+    },
+    subtitle: {
+        fontSize: 14,
+        color: 'gray',
+        marginHorizontal: 10,
+        marginTop: 5,
     },
 });
 

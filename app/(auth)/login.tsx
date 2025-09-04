@@ -166,7 +166,6 @@ const LoginScreen = () => {
                 {/*        resizeMode="cover" // cover ensures the image fills the view nicely*/}
                 {/*    />*/}
                 {/*</View>*/}
-
             </View>
         </View>
     );
