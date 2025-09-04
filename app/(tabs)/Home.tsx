@@ -76,6 +76,7 @@ const Home = () => {
                     </TouchableOpacity>
                     <View>
                         <Text style={styles.headerTitle}>Hello, Jenny!</Text>
+                        <Text style={styles.headerSub}>Welcome to TasteLanka 🇱🇰</Text>
                         <Text style={styles.headerSubtitle}>Check Amazing Recipes</Text>
                     </View>
                 </View>
@@ -117,7 +118,7 @@ const Home = () => {
                 Text
 
                 {/* Popular Recipes */}
-                <View style={{ marginBottom: 20, paddingHorizontal: 20 }}>
+                <View style={{ marginBottom: 20, paddingHorizontal: 20 ,height:370}}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Popular Recipes</Text>
                         <TouchableOpacity>
@@ -187,6 +188,7 @@ const styles = StyleSheet.create({
         elevation: 3,
         overflow: "hidden",
         width: 160,
+        height:270
     },
     recipeImage: { width: "100%", height: 160 },
     recipeInfo: { padding: 10 },
@@ -200,7 +202,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20, // increase horizontal padding
         paddingVertical: 15,
         width: "100%", // make sure header takes full width
-        height:"15%",
+        height:"17%",
         borderTopEndRadius:"10%",
         borderTopStartRadius:"10%",
         backgroundColor: "#4CAF50", // example color
@@ -217,7 +219,12 @@ const styles = StyleSheet.create({
         borderRadius: 25,
     },
     headerTitle: {
-        fontSize: 18,
+        fontSize: 20,
+        fontWeight: "bold",
+        color: "#fff",
+    },
+    headerSub:{
+        fontSize: 17,
         fontWeight: "bold",
         color: "#fff",
     },

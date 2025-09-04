@@ -6,10 +6,11 @@ function TabLayout() {
     return (
         <Tabs
             screenOptions={{
-                headerShown: false, // hides the top header if you want
-                tabBarActiveTintColor: '#4CAF50', // active icon color
-                tabBarInactiveTintColor: 'gray',   // inactive icon color
-                tabBarStyle: { backgroundColor: '#fff', height: 60 }, // tab bar style
+                headerShown: false,
+                tabBarActiveTintColor: '#4CAF50',
+                tabBarInactiveTintColor: 'gray',
+
+
             }}
         >
             <Tabs.Screen
