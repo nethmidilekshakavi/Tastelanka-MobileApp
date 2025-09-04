@@ -91,9 +91,11 @@ const Home = () => {
                 <TextInput placeholder="Search Any Recipe.." style={styles.searchInput} />
             </View>
 
+            <Text></Text>
+
             <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
                 {/* Categories */}
-                <View style={styles.section}>
+                <View style={{ marginBottom: 20, paddingHorizontal: 20 }}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Categories</Text>
                         <TouchableOpacity>
@@ -112,8 +114,10 @@ const Home = () => {
                     </ScrollView>
                 </View>
 
+                Text
+
                 {/* Popular Recipes */}
-                <View style={{ marginBottom: 20, paddingHorizontal: 16 }}>
+                <View style={{ marginBottom: 20, paddingHorizontal: 20 }}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Popular Recipes</Text>
                         <TouchableOpacity>
