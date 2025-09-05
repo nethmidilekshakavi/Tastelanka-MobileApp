@@ -144,13 +144,7 @@ const Home = () => {
                     </ScrollView>
                 </View>
 
-                <View className="flex-1 justify-center items-center">
-                    <Text className="text-2xl font-bold mb-4">Profile</Text>
 
-                    <TouchableOpacity onPress={() => router.push("/User")}>
-                        <Text>Go to Users List</Text>
-                    </TouchableOpacity>
-                </View>
             </ScrollView>
 
 
