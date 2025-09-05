@@ -10,7 +10,7 @@ import {
     Dimensions,
 } from "react-native";
 import { Search, Bell, Heart, Compass, Star, User } from "lucide-react-native";
-import { router } from "expo-router";
+import {router, useNavigation, useRouter} from "expo-router";
 
 const Home = () => {
     const categories = [
@@ -61,6 +61,8 @@ const Home = () => {
             image: "https://i.pinimg.com/1200x/29/75/d6/2975d6a4f9e6963da24f773898eab7f3.jpg",
         },
     ];
+
+    const router = useRouter();
 
 
     return (
@@ -141,7 +143,17 @@ const Home = () => {
                         ))}
                     </ScrollView>
                 </View>
+
+                <View className="flex-1 justify-center items-center">
+                    <Text className="text-2xl font-bold mb-4">Profile</Text>
+
+                    <TouchableOpacity onPress={() => router.push("/User")}>
+                        <Text>Go to Users List</Text>
+                    </TouchableOpacity>
+                </View>
             </ScrollView>
+
+
         </View>
     );
 };

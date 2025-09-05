@@ -1,134 +1,149 @@
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Pressable,
-  Alert,
-  ActivityIndicator,
-  Image,
-} from "react-native";
+// app/register.tsx
 import React, { useState } from "react";
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    Pressable,
+    Alert,
+    ActivityIndicator,
+    Image,
+} from "react-native";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { register } from "@/services/authService";
 
 const Register = () => {
-  const router = useRouter();
-  const [fullName, setFullName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [password, setPasword] = useState<string>("");
-  const [profilePic, setProfilePic] = useState<string | null>(null);
-  const [isLodingReg, setIsLoadingReg] = useState<boolean>(false);
+    const router = useRouter();
 
-  const handlePickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
+    const [fullName, setFullName] = useState<string>("");
+    const [email, setEmail] = useState<string>("");
+    const [password, setPassword] = useState<string>("");
+    const [profilePic, setProfilePic] = useState<string | null>(null);
+    const [isLoadingReg, setIsLoadingReg] = useState<boolean>(false);
 
-    if (!result.canceled) {
-      setProfilePic(result.assets[0].uri);
-    }
-  };
+    // Pick image from library
+    const handlePickImage = async () => {
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.7,
+            });
 
-  const handleRegister = async () => {
-    if (!fullName || !email || !password) {
-      Alert.alert("Missing fields", "Please fill all the fields");
-      return;
-    }
+            if (!result.canceled) {
+                // Make sure assets exist
+                if (result.assets && result.assets.length > 0) {
+                    setProfilePic(result.assets[0].uri);
+                } else {
+                    Alert.alert("Error", "No image selected. Try again.");
+                }
+            }
+        } catch (error) {
+            console.error("Image pick error:", error);
+            Alert.alert("Error", "Something went wrong while picking the image");
+        }
+    };
 
-    if (isLodingReg) return;
-    setIsLoadingReg(true);
+    // Register user
+    const handleRegister = async () => {
+        if (!fullName || !email || !password) {
+            Alert.alert("Missing fields", "Please fill all the fields");
+            return;
+        }
 
-    await register(fullName, email, password, profilePic)
-      .then((res) => {
-        console.log("Register success:", res);
-        router.back();
-      })
-      .catch((err) => {
-        console.error(err);
-        Alert.alert("Registration failed", "Something went wrong");
-      })
-      .finally(() => {
-        setIsLoadingReg(false);
-      });
-  };
+        if (isLoadingReg) return;
+        setIsLoadingReg(true);
 
-  return (
-    <View className="flex-1 bg-gray-100 justify-center p-4">
-      <Text className="text-2xl font-bold mb-6 text-blue-600 text-center">
-        Register
-      </Text>
+        try {
+            const user = await register(fullName, email, password, profilePic);
+            console.log("Register success:", user);
+            Alert.alert("Success", "User registered successfully");
+            router.push("/(auth)/login"); // navigate to UsersList page
+        } catch (err: any) {
+            console.error(err);
+            Alert.alert("Registration failed", err.message || "Something went wrong");
+        } finally {
+            setIsLoadingReg(false);
+        }
+    };
 
-      {/* Full Name */}
-      <TextInput
-        placeholder="Full Name"
-        className="bg-surface border border-gray-300 rounded px-4 py-3 mb-4 text-gray-900"
-        placeholderTextColor="#9CA3AF"
-        value={fullName}
-        onChangeText={setFullName}
-      />
+    return (
+        <View className="flex-1 bg-gray-100 justify-center p-4">
+            <Text className="text-2xl font-bold mb-6 text-blue-600 text-center">
+                Register
+            </Text>
 
-      {/* Email */}
-      <TextInput
-        placeholder="Email"
-        className="bg-surface border border-gray-300 rounded px-4 py-3 mb-4 text-gray-900"
-        placeholderTextColor="#9CA3AF"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
+            {/* Full Name */}
+            <TextInput
+                placeholder="Full Name"
+                className="bg-white border border-gray-300 rounded px-4 py-3 mb-4 text-gray-900"
+                placeholderTextColor="#9CA3AF"
+                value={fullName}
+                onChangeText={setFullName}
+            />
 
-      {/* Password */}
-      <TextInput
-        placeholder="Password"
-        className="bg-surface border border-gray-300 rounded px-4 py-3 mb-4 text-gray-900"
-        placeholderTextColor="#9CA3AF"
-        secureTextEntry
-        value={password}
-        onChangeText={setPasword}
-      />
+            {/* Email */}
+            <TextInput
+                placeholder="Email"
+                className="bg-white border border-gray-300 rounded px-4 py-3 mb-4 text-gray-900"
+                placeholderTextColor="#9CA3AF"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+            />
 
-      {/* Profile Picture */}
-      <TouchableOpacity
-        className="bg-gray-300 p-3 rounded mb-4"
-        onPress={handlePickImage}
-      >
-        <Text className="text-center text-gray-800">
-          {profilePic ? "Change Profile Picture" : "Pick Profile Picture (optional)"}
-        </Text>
-      </TouchableOpacity>
+            {/* Password */}
+            <TextInput
+                placeholder="Password"
+                className="bg-white border border-gray-300 rounded px-4 py-3 mb-4 text-gray-900"
+                placeholderTextColor="#9CA3AF"
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+            />
 
-      {profilePic && (
-        <Image
-          source={{ uri: profilePic }}
-          className="w-24 h-24 rounded-full self-center mb-4"
-        />
-      )}
+            {/* Profile Picture */}
+            <TouchableOpacity
+                className="bg-gray-300 p-3 rounded mb-4"
+                onPress={handlePickImage}
+            >
+                <Text className="text-center text-gray-800">
+                    {profilePic
+                        ? "Change Profile Picture"
+                        : "Pick Profile Picture (optional)"}
+                </Text>
+            </TouchableOpacity>
 
-      {/* Register Button */}
-      <TouchableOpacity
-        className="bg-green-600 p-4 rounded mt-2"
-        onPress={handleRegister}
-      >
-        {isLodingReg ? (
-          <ActivityIndicator color="#fff" size="large" />
-        ) : (
-          <Text className="text-center text-2xl text-white">Register</Text>
-        )}
-      </TouchableOpacity>
+            {profilePic && (
+                <Image
+                    source={{ uri: profilePic }}
+                    className="w-24 h-24 rounded-full self-center mb-4"
+                />
+            )}
 
-      {/* Back to Login */}
-      <Pressable onPress={() => router.back()}>
-        <Text className="text-center text-blue-500 text-xl mt-4">
-          Already have an account? Login
-        </Text>
-      </Pressable>
-    </View>
-  );
+            {/* Register Button */}
+            <TouchableOpacity
+                className="bg-green-600 p-4 rounded mt-2"
+                onPress={handleRegister}
+            >
+                {isLoadingReg ? (
+                    <ActivityIndicator color="#fff" size="large" />
+                ) : (
+                    <Text className="text-center text-2xl text-white">Register</Text>
+                )}
+            </TouchableOpacity>
+
+            {/* Back to Login */}
+            <Pressable onPress={() => router.back()}>
+                <Text className="text-center text-blue-500 text-xl mt-4">
+                    Already have an account? Login
+                </Text>
+            </Pressable>
+        </View>
+    );
 };
 
 export default Register;

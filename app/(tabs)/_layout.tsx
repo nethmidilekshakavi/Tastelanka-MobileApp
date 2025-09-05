@@ -22,7 +22,7 @@ function TabLayout() {
                 }}
             />
             <Tabs.Screen
-                name="Nitification"
+                name="Notification"
                 options={{
                     title: 'Nitification',
                     tabBarIcon: ({ color, size }) => (

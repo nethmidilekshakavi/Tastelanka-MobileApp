@@ -15,6 +15,9 @@ import { login } from "@/services/authService";
 import { Video } from "expo-av"; // <-- import Video from expo-av
 // @ts-ignore
 import videoFile from "../../assets/vidios/PinDown.io_@kamkumarasinghe_1756743322.mp4";
+import {getDoc} from "@firebase/firestore";
+import {doc} from "firebase/firestore";
+import {db} from "@/config/firebaseConfig";
 // import image from "../../assets/images/fac132dbf73ecd95071f6da669ce7f15.jpg";
 
 
@@ -29,9 +32,19 @@ const LoginScreen = () => {
         setIsLoading(true);
 
         try {
-            const user = await login(email, password);
+            const user = await login(email, password); // Firebase auth login
             console.log("Login success:", user);
-            router.push("/(tabs)/Home");
+
+            // firestore users collection එකෙන් role එක ගන්න
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            const userData = userDoc.data();
+
+            if (userData?.role === "admin") {
+                router.push("../components/AdminDashBoard.tsx");
+            } else {
+                router.push("/(tabs)/Home");
+            }
+
         } catch (err) {
             console.error(err);
             Alert.alert("Login failed", "Something went wrong");
@@ -39,6 +52,7 @@ const LoginScreen = () => {
             setIsLoading(false);
         }
     };
+
 
     return (
         <View className="flex-1 bg-gradient-to-br from-green-100 to-green-50">

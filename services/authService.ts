@@ -1,35 +1,19 @@
-// services/authService.ts
-import { app } from "@/config/firebaseConfig";
+import { auth, db, storage } from "@/config/firebaseConfig";
 import {
-  getAuth,
   createUserWithEmailAndPassword,
   updateProfile,
   signInWithEmailAndPassword,
 } from "firebase/auth";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
+import { doc, setDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const DEFAULT_PROFILE_PIC =
-  "https://firebasestorage.googleapis.com/v0/b/your-app-id.appspot.com/o/default_profile.png?alt=media";
+    "https://firebasestorage.googleapis.com/v0/b/your-app-id.appspot.com/o/default_profile.png?alt=media";
 
-export const register = async (
-  fullName: string,
-  email: string,
-  password: string,
-  profilePic?: string | null
-) => {
-  // create user
+export const register = async (fullName: string, email: string, password: string, profilePic?: string | null) => {
   const userCred = await createUserWithEmailAndPassword(auth, email, password);
 
-  // split name
-  const [firstName, ...rest] = fullName.split(" ");
-  const lastName = rest.join(" ");
-
-  // upload profile image (if user selected)
+  // Upload profile pic if exists
   let photoURL = DEFAULT_PROFILE_PIC;
   if (profilePic) {
     const imgRef = ref(storage, `profilePics/${userCred.user.uid}.jpg`);
@@ -39,28 +23,23 @@ export const register = async (
     photoURL = await getDownloadURL(imgRef);
   }
 
-  // update firebase auth profile
-  await updateProfile(userCred.user, {
-    displayName: fullName,
-    photoURL,
-  });
+  // Update Auth profile
+  await updateProfile(userCred.user, { displayName: fullName, photoURL });
 
-  // save to firestore with default role
+  // Save to Firestore
   await setDoc(doc(db, "users", userCred.user.uid), {
     uid: userCred.user.uid,
-    firstName,
-    lastName,
+    fullName,
     email,
     photoURL,
-    role: "user", // <-- DEFAULT ROLE
+    role: "user",
     createdAt: new Date(),
   });
 
   return userCred.user;
 };
 
-
 export const login = async (email: string, password: string) => {
-  const userCred = await signInWithEmailAndPassword(auth, email, password)
-  return userCred.user  
-}
+  const userCred = await signInWithEmailAndPassword(auth, email, password);
+  return userCred.user;
+};
