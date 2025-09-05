@@ -12,7 +12,10 @@ import {
     TextInput,
     StyleSheet,
 } from "react-native";
-import { db } from "@/config/firebaseConfig";
+
+import { auth, db ,functions } from "@/config/firebaseConfig";
+
+
 import {
     collection,
     query,
@@ -20,9 +23,9 @@ import {
     onSnapshot,
     doc,
     updateDoc,
-    deleteDoc,
+    getDoc, deleteDoc,
 } from "firebase/firestore";
-
+import { httpsCallable } from "firebase/functions";
 type UserDoc = {
     uid: string;
     fullName?: string;
@@ -34,6 +37,9 @@ type UserDoc = {
 const DEFAULT_PROFILE_PIC =
     "https://i.pinimg.com/736x/d9/7b/bb/d97bbb08017ac2309307f0822e63d082.jpg";
 
+const deleteUser = httpsCallable(functions, "deleteUserAccount");
+
+
 const UsersList = () => {
     const [users, setUsers] = useState<UserDoc[]>([]);
     const [loading, setLoading] = useState(true);
@@ -42,7 +48,11 @@ const UsersList = () => {
     const [updatedName, setUpdatedName] = useState("");
     const [updatedRole, setUpdatedRole] = useState("");
 
-    // Fetch users from Firestore
+    // 🔹 Current user + role
+    const [currentUser, setCurrentUser] = useState<any>(null);
+    const [currentUserRole, setCurrentUserRole] = useState<string>("user");
+
+    // Fetch users list
     useEffect(() => {
         const q = query(collection(db, "users"), orderBy("fullName"));
         const unsubscribe = onSnapshot(
@@ -61,33 +71,44 @@ const UsersList = () => {
                 Alert.alert("Error", "Failed to load users");
             }
         );
-
         return () => unsubscribe();
     }, []);
 
-    // Delete user with confirmation
-    const handleDelete = (uid: string, userName: string) => {
-        Alert.alert(
-            "Delete User",
-            `Are you sure you want to delete "${userName}"?`,
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Delete",
-                    style: "destructive",
-                    onPress: async () => {
-                        try {
-                            await deleteDoc(doc(db, "users", uid));
-                            Alert.alert("Success", "User deleted successfully!");
-                        } catch (error) {
-                            console.error("Error deleting user:", error);
-                            Alert.alert("Error", "Failed to delete user");
-                        }
-                    },
-                },
-            ]
-        );
+    // Fetch current user + role
+    useEffect(() => {
+        const user = auth.currentUser;
+        if (user) {
+            setCurrentUser(user);
+
+            const fetchRole = async () => {
+                try {
+                    const userRef = doc(db, "users", user.uid);
+                    const userSnap = await getDoc(userRef);
+                    if (userSnap.exists()) {
+                        setCurrentUserRole(userSnap.data().role || "user");
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch role:", err);
+                }
+            };
+
+            fetchRole();
+        }
+    }, []);
+
+    // Delete user
+    const handleDelete = async (uid: string) => {
+        try {
+            const userRef = doc(db, "users", uid);
+            await deleteDoc(userRef);
+            Alert.alert("Success", "User deleted successfully!");
+            // Optionally refresh the user list or state
+        } catch (error) {
+            console.error("Error deleting user:", error);
+            Alert.alert("Error", "Failed to delete user");
+        }
     };
+
 
     // Open edit modal
     const handleEdit = (user: UserDoc) => {
@@ -97,7 +118,7 @@ const UsersList = () => {
         setEditModalVisible(true);
     };
 
-    // Save updates with validation
+    // Save updates
     const handleSave = async () => {
         if (!selectedUser) return;
 
@@ -121,7 +142,6 @@ const UsersList = () => {
         }
     };
 
-    // Close modal
     const handleCloseModal = () => {
         setEditModalVisible(false);
         setSelectedUser(null);
@@ -129,20 +149,18 @@ const UsersList = () => {
         setUpdatedRole("");
     };
 
-    // Loading state
     if (loading) {
         return (
-            <View style={styles.centerContainer}>
+            <View>
                 <ActivityIndicator size="large" color="#3B82F6" />
                 <Text style={styles.loadingText}>Loading users...</Text>
             </View>
         );
     }
 
-    // Empty state
     if (!users.length) {
         return (
-            <View style={styles.centerContainer}>
+            <View>
                 <Text style={styles.emptyText}>No users found</Text>
                 <Text style={styles.emptySubText}>
                     Users will appear here once they register
@@ -152,11 +170,10 @@ const UsersList = () => {
     }
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>User Management</Text>
-            <Text style={styles.subtitle}>Total Users: {users.length}</Text>
+        <View>
+            <Text style={styles.subtitle}>👥 Total Users: {users.length}</Text>
 
-            {/* Enhanced Table Header */}
+            {/* Table Header */}
             <View style={styles.tableHeader}>
                 <View style={styles.headerCell}>
                     <Text style={styles.headerText}>Profile</Text>
@@ -175,22 +192,23 @@ const UsersList = () => {
                 </View>
             </View>
 
-            {/* Users Table */}
+            {/* Users */}
             <FlatList
                 data={users}
                 keyExtractor={(item) => item.uid}
                 showsVerticalScrollIndicator={false}
                 renderItem={({ item, index }) => (
-                    <View style={[
-                        styles.tableRow,
-                        index % 2 === 0 ? styles.evenRow : styles.oddRow
-                    ]}>
-                        {/* Profile Picture */}
+                    <View
+                        style={[
+                            styles.tableRow,
+                            index % 2 === 0 ? styles.evenRow : styles.oddRow,
+                        ]}
+                    >
+                        {/* Profile */}
                         <View style={styles.cell}>
                             <Image
                                 source={{ uri: item.photoURL || DEFAULT_PROFILE_PIC }}
                                 style={styles.profileImage}
-                                onError={() => console.log("Error loading image")}
                             />
                         </View>
 
@@ -210,14 +228,18 @@ const UsersList = () => {
 
                         {/* Role */}
                         <View style={styles.cell}>
-                            <View style={[
-                                styles.roleBadge,
-                                item.role === 'admin' ? styles.adminBadge : styles.userBadge
-                            ]}>
-                                <Text style={[
-                                    styles.roleText,
-                                    item.role === 'admin' ? styles.adminText : styles.userText
-                                ]}>
+                            <View
+                                style={[
+                                    styles.roleBadge,
+                                    item.role === "admin" ? styles.adminBadge : styles.userBadge,
+                                ]}
+                            >
+                                <Text
+                                    style={[
+                                        styles.roleText,
+                                        item.role === "admin" ? styles.adminText : styles.userText,
+                                    ]}
+                                >
                                     {(item.role || "user").toUpperCase()}
                                 </Text>
                             </View>
@@ -230,15 +252,16 @@ const UsersList = () => {
                                     style={styles.editButton}
                                     onPress={() => handleEdit(item)}
                                 >
-                                    <Text style={styles.editButtonText}>Edit</Text>
+                                    <Text style={styles.editButtonText}>✏️ Edit</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
                                     style={styles.deleteButton}
                                     onPress={() => handleDelete(item.uid, item.fullName || "User")}
                                 >
-                                    <Text style={styles.deleteButtonText}>Delete</Text>
+                                    <Text style={styles.deleteButtonText}>🗑️ Delete</Text>
                                 </TouchableOpacity>
+
                             </View>
                         </View>
                     </View>
@@ -246,7 +269,7 @@ const UsersList = () => {
                 ItemSeparatorComponent={() => <View style={styles.separator} />}
             />
 
-            {/* Enhanced Edit Modal */}
+            {/* Edit Modal */}
             <Modal
                 visible={editModalVisible}
                 transparent
@@ -255,12 +278,14 @@ const UsersList = () => {
             >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Edit User Details</Text>
+                        <Text style={styles.modalTitle}>✏️ Edit User Details</Text>
 
                         {selectedUser && (
                             <View style={styles.userInfo}>
                                 <Image
-                                    source={{ uri: selectedUser.photoURL || DEFAULT_PROFILE_PIC }}
+                                    source={{
+                                        uri: selectedUser.photoURL || DEFAULT_PROFILE_PIC,
+                                    }}
                                     style={styles.modalProfileImage}
                                 />
                                 <Text style={styles.modalUserEmail}>
@@ -276,7 +301,6 @@ const UsersList = () => {
                                 onChangeText={setUpdatedName}
                                 style={styles.textInput}
                                 placeholder="Enter full name"
-                                placeholderTextColor="#9CA3AF"
                             />
                         </View>
 
@@ -287,7 +311,6 @@ const UsersList = () => {
                                 onChangeText={setUpdatedRole}
                                 style={styles.textInput}
                                 placeholder="user or admin"
-                                placeholderTextColor="#9CA3AF"
                             />
                         </View>
 
@@ -296,14 +319,14 @@ const UsersList = () => {
                                 style={styles.cancelButton}
                                 onPress={handleCloseModal}
                             >
-                                <Text style={styles.cancelButtonText}>Cancel</Text>
+                                <Text style={styles.cancelButtonText}>❌ Cancel</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
                                 style={styles.saveButton}
                                 onPress={handleSave}
                             >
-                                <Text style={styles.saveButtonText}>Save Changes</Text>
+                                <Text style={styles.saveButtonText}>💾 Save</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -313,256 +336,170 @@ const UsersList = () => {
     );
 };
 
+
+
+
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F9FAFB',
-        padding: 16,
-    },
-    centerContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#F9FAFB',
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#1F2937',
-        marginBottom: 8,
-    },
     subtitle: {
-        fontSize: 16,
-        color: '#6B7280',
+        fontSize: 20,
+        color: "#2563EB",
         marginBottom: 20,
+        fontWeight: "bold",
     },
     loadingText: {
         marginTop: 12,
-        color: '#6B7280',
+        color: "#6B7280",
         fontSize: 16,
     },
     emptyText: {
         fontSize: 20,
-        color: '#6B7280',
-        textAlign: 'center',
+        color: "#EF4444",
+        textAlign: "center",
         marginBottom: 8,
+        fontWeight: "bold",
     },
     emptySubText: {
         fontSize: 14,
-        color: '#9CA3AF',
-        textAlign: 'center',
+        color: "#9CA3AF",
+        textAlign: "center",
     },
 
-    // Table Styles
     tableHeader: {
-        flexDirection: 'row',
-        backgroundColor: '#E5E7EB',
+        flexDirection: "row",
+        backgroundColor: "#93C5FD",
         paddingVertical: 12,
         paddingHorizontal: 8,
         borderTopLeftRadius: 8,
         borderTopRightRadius: 8,
         borderBottomWidth: 2,
-        borderBottomColor: '#D1D5DB',
+        borderBottomColor: "#3B82F6",
     },
-    headerCell: {
-        flex: 1,
-        alignItems: 'center',
-        paddingHorizontal: 4,
-    },
-    nameColumn: {
-        flex: 2,
-    },
-    emailColumn: {
-        flex: 2,
-    },
+    headerCell: { flex: 1, alignItems: "center", paddingHorizontal: 4 },
+    nameColumn: { flex: 2 },
+    emailColumn: { flex: 2 },
     headerText: {
-        fontWeight: '600',
-        color: '#374151',
+        fontWeight: "700",
+        color: "#1E3A8A",
         fontSize: 14,
-        textAlign: 'center',
-    },
-    tableRow: {
-        flexDirection: 'row',
-        paddingVertical: 12,
-        paddingHorizontal: 8,
-        alignItems: 'center',
-    },
-    evenRow: {
-        backgroundColor: '#FFFFFF',
-    },
-    oddRow: {
-        backgroundColor: '#F9FAFB',
-    },
-    separator: {
-        height: 1,
-        backgroundColor: '#E5E7EB',
-    },
-    cell: {
-        flex: 1,
-        alignItems: 'center',
-        paddingHorizontal: 4,
     },
 
-    // Profile Image
+    tableRow: {
+        flexDirection: "row",
+        paddingVertical: 12,
+        paddingHorizontal: 8,
+        alignItems: "center",
+    },
+    evenRow: { backgroundColor: "#E0F2FE" },
+    oddRow: { backgroundColor: "#FFFFFF" },
+    separator: { height: 1, backgroundColor: "#BFDBFE" },
+
+    cell: { flex: 1, alignItems: "center", paddingHorizontal: 4 },
+
     profileImage: {
         width: 40,
         height: 40,
         borderRadius: 20,
         borderWidth: 2,
-        borderColor: '#E5E7EB',
+        borderColor: "#3B82F6",
     },
 
-    // Text Styles
     nameText: {
         fontSize: 14,
-        color: '#1F2937',
-        fontWeight: '500',
-        textAlign: 'center',
+        color: "#111827",
+        fontWeight: "600",
+        textAlign: "center",
     },
-    emailText: {
-        fontSize: 12,
-        color: '#6B7280',
-        textAlign: 'center',
-    },
+    emailText: { fontSize: 12, color: "#4B5563", textAlign: "center" },
 
-    // Role Badge
     roleBadge: {
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 12,
-        minWidth: 50,
+        minWidth: 60,
     },
-    adminBadge: {
-        backgroundColor: '#FEE2E2',
-    },
-    userBadge: {
-        backgroundColor: '#E0F2FE',
-    },
-    roleText: {
-        fontSize: 10,
-        fontWeight: '600',
-        textAlign: 'center',
-    },
-    adminText: {
-        color: '#DC2626',
-    },
-    userText: {
-        color: '#0891B2',
-    },
+    adminBadge: { backgroundColor: "#FECACA" },
+    userBadge: { backgroundColor: "#BBF7D0" },
+    roleText: { fontSize: 10, fontWeight: "700", textAlign: "center" },
+    adminText: { color: "#B91C1C" },
+    userText: { color: "#047857" },
 
-    // Action Buttons
-    actionButtons: {
-        flexDirection: 'row',
-        gap: 4,
-    },
+    actionButtons: { flexDirection: "row", gap: 6 },
     editButton: {
-        backgroundColor: '#3B82F6',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 4,
+        backgroundColor: "#2563EB",
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 6,
     },
-    editButtonText: {
-        color: '#FFFFFF',
-        fontSize: 12,
-        fontWeight: '600',
-    },
+    editButtonText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
     deleteButton: {
-        backgroundColor: '#EF4444',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 4,
+        backgroundColor: "#DC2626",
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 6,
     },
-    deleteButtonText: {
-        color: '#FFFFFF',
-        fontSize: 12,
-        fontWeight: '600',
-    },
+    deleteButtonText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
 
-    // Modal Styles
     modalOverlay: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "rgba(0,0,0,0.5)",
         padding: 20,
     },
     modalContent: {
-        backgroundColor: '#FFFFFF',
+        backgroundColor: "#FFFFFF",
         padding: 24,
         borderRadius: 12,
-        width: '100%',
+        width: "100%",
         maxWidth: 400,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5,
     },
     modalTitle: {
         fontSize: 20,
-        fontWeight: 'bold',
-        color: '#1F2937',
+        fontWeight: "bold",
+        color: "#2563EB",
         marginBottom: 16,
-        textAlign: 'center',
+        textAlign: "center",
     },
-    userInfo: {
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    modalProfileImage: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        marginBottom: 8,
-    },
-    modalUserEmail: {
-        fontSize: 14,
-        color: '#6B7280',
-    },
-    inputGroup: {
-        marginBottom: 16,
-    },
+    userInfo: { alignItems: "center", marginBottom: 20 },
+    modalProfileImage: { width: 60, height: 60, borderRadius: 30, marginBottom: 8 },
+    modalUserEmail: { fontSize: 14, color: "#6B7280" },
+
+    inputGroup: { marginBottom: 16 },
     inputLabel: {
         fontSize: 14,
-        fontWeight: '600',
-        color: '#374151',
+        fontWeight: "700",
+        color: "#374151",
         marginBottom: 8,
     },
     textInput: {
         borderWidth: 1,
-        borderColor: '#D1D5DB',
+        borderColor: "#93C5FD",
         borderRadius: 8,
         padding: 12,
         fontSize: 16,
-        color: '#1F2937',
-        backgroundColor: '#FFFFFF',
+        color: "#1F2937",
+        backgroundColor: "#F9FAFB",
     },
     modalButtons: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
+        flexDirection: "row",
+        justifyContent: "flex-end",
         gap: 12,
         marginTop: 20,
     },
     cancelButton: {
-        backgroundColor: '#6B7280',
+        backgroundColor: "#6B7280",
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 6,
     },
-    cancelButtonText: {
-        color: '#FFFFFF',
-        fontWeight: '600',
-    },
+    cancelButtonText: { color: "#FFFFFF", fontWeight: "700" },
     saveButton: {
-        backgroundColor: '#10B981',
+        backgroundColor: "#10B981",
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 6,
     },
-    saveButtonText: {
-        color: '#FFFFFF',
-        fontWeight: '600',
-    },
+    saveButtonText: { color: "#FFFFFF", fontWeight: "700" },
 });
 
 export default UsersList;

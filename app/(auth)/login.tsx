@@ -132,7 +132,7 @@ const LoginScreen = () => {
                     <TouchableOpacity className="w-12 h-12 rounded-full justify-center items-center bg-gray-100">
                         <Image
                             source={{
-                                uri: "https://i.pinimg.com/1200x/60/41/99/604199df880fb029291ddd7c382e828b.jpg",
+                                uri: "https://i.pinimg.com/736x/d9/7b/bb/d97bbb08017ac2309307f0822e63d082.jpg",
                             }}
                             className="w-6 h-6"
                             resizeMode="contain"

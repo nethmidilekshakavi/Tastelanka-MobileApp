@@ -13,6 +13,7 @@ import {
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { register } from "@/services/authService";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const Register = () => {
     const router = useRouter();
@@ -34,7 +35,6 @@ const Register = () => {
             });
 
             if (!result.canceled) {
-                // Make sure assets exist
                 if (result.assets && result.assets.length > 0) {
                     setProfilePic(result.assets[0].uri);
                 } else {
@@ -45,6 +45,13 @@ const Register = () => {
             console.error("Image pick error:", error);
             Alert.alert("Error", "Something went wrong while picking the image");
         }
+    };
+
+    // Convert URI to blob
+    const uriToBlob = async (uri: string) => {
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        return blob;
     };
 
     // Register user
@@ -58,10 +65,22 @@ const Register = () => {
         setIsLoadingReg(true);
 
         try {
-            const user = await register(fullName, email, password, profilePic);
+            let photoURL = null;
+
+            // Upload profile pic if selected
+            if (profilePic) {
+                const blob = await uriToBlob(profilePic);
+                const storage = getStorage();
+                const storageRef = ref(storage, `profilePics/${Date.now()}.jpg`);
+                await uploadBytes(storageRef, blob);
+                photoURL = await getDownloadURL(storageRef); // Safe Firebase URL
+            }
+
+            // Call your register function (Auth + Firestore)
+            const user = await register(fullName, email, password, photoURL);
             console.log("Register success:", user);
-            Alert.alert("Success", "User registered successfully");
-            router.push("/(auth)/login"); // navigate to UsersList page
+            Alert.alert("Success", "User registered successfully!");
+            router.push("/(auth)/login");
         } catch (err: any) {
             console.error(err);
             Alert.alert("Registration failed", err.message || "Something went wrong");

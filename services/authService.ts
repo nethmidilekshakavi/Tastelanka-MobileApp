@@ -8,25 +8,27 @@ import { doc, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const DEFAULT_PROFILE_PIC =
-    "https://firebasestorage.googleapis.com/v0/b/your-app-id.appspot.com/o/default_profile.png?alt=media";
+    "https://i.pinimg.com/736x/d9/7b/bb/d97bbb08017ac2309307f0822e63d082.jpg";
 
 export const register = async (fullName: string, email: string, password: string, profilePic?: string | null) => {
   const userCred = await createUserWithEmailAndPassword(auth, email, password);
 
-  // Upload profile pic if exists
   let photoURL = DEFAULT_PROFILE_PIC;
-  if (profilePic) {
-    const imgRef = ref(storage, `profilePics/${userCred.user.uid}.jpg`);
-    const img = await fetch(profilePic);
-    const bytes = await img.blob();
-    await uploadBytes(imgRef, bytes);
-    photoURL = await getDownloadURL(imgRef);
+
+  if (profilePic && !profilePic.startsWith("file://")) {
+    try {
+      const imgRef = ref(storage, `profilePics/${userCred.user.uid}.jpg`);
+      const img = await fetch(profilePic);
+      const bytes = await img.blob();
+      await uploadBytes(imgRef, bytes);
+      photoURL = await getDownloadURL(imgRef);
+    } catch (err) {
+      console.warn("Failed to upload profile pic, using default.", err);
+    }
   }
 
-  // Update Auth profile
   await updateProfile(userCred.user, { displayName: fullName, photoURL });
 
-  // Save to Firestore
   await setDoc(doc(db, "users", userCred.user.uid), {
     uid: userCred.user.uid,
     fullName,
