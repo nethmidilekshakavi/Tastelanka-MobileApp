@@ -40,7 +40,7 @@ const LoginScreen = () => {
             const userData = userDoc.data();
 
             if (userData?.role === "admin") {
-                router.push("../components/AdminDashBoard.tsx");
+                router.push("/adminComporents/AdminDashBoard");
             } else {
                 router.push("/(tabs)/Home");
             }
