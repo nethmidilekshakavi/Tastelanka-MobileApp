@@ -11,6 +11,9 @@ import {
     Menu,
     X
 } from 'lucide-react';
+import {Text, TouchableOpacity, View} from "react-native";
+import {router} from "expo-router";
+import UsersList from '@/components/UsersList';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
@@ -67,45 +70,7 @@ const AdminDashboard = () => {
     );
 
     const renderUserManagement = () => (
-        <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
-                <button className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors">
-                    <Plus size={20} />
-                    Add User
-                </button>
-            </div>
-
-            <div className="bg-white p-4 rounded-lg shadow-sm mb-6 flex items-center gap-3">
-                <Search size={20} className="text-green-600" />
-                <input
-                    type="text"
-                    placeholder="Search users..."
-                    className="flex-1 outline-none text-gray-700"
-                />
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                <div className="bg-gray-50 p-4 grid grid-cols-4 gap-4 font-semibold text-gray-700">
-                    <div>Name</div>
-                    <div>Email</div>
-                    <div>Role</div>
-                    <div>Status</div>
-                </div>
-                {[1, 2, 3, 4, 5].map(i => (
-                    <div key={i} className="p-4 border-b border-gray-100 grid grid-cols-4 gap-4 items-center hover:bg-gray-50">
-                        <div className="text-gray-800">User {i}</div>
-                        <div className="text-gray-600">user{i}@email.com</div>
-                        <div className="text-gray-600">User</div>
-                        <div>
-              <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
-                Active
-              </span>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
+        <UsersList />
     );
 
     const renderCategoryManagement = () => (
