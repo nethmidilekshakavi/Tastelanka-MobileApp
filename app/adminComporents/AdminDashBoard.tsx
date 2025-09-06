@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import UsersList from "@/components/UsersList";
 import CategorysScreen from "@/app/Category";
-import {CategoryList, CategoryManagemt} from "@/components/CategoryList";
+import {CategoryList, CategoryManagement, CategoryManagemt} from "@/components/CategoryList";
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
@@ -191,30 +191,16 @@ const AdminDashboard = () => {
 
     const renderCategoryManagement = () => (
         <div className="p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <div className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-2xl p-6 text-white flex-1 mr-0 sm:mr-4">
-                    <h1 className="text-2xl font-bold mb-2">Category Management</h1>
-                    <p className="text-purple-100">Organize your recipes with categories</p>
-                </div>
-                <button className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:from-green-700 hover:to-green-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                    <Plus size={20} />
-                    Add Category
-                </button>
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 text-white mb-6">
+                <h1 className="text-2xl font-bold mb-2">Category Management</h1>
+                <p className="text-blue-100">Manage and monitor all users on your platform</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="p-6">
-                    <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 text-white mb-6">
-                        <h1 className="text-2xl font-bold mb-2">User Management</h1>
-                        <p className="text-blue-100">Manage and monitor all users on your platform</p>
-                    </div>
 
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 ">
-                        <div className="text-center py-4">
-                            <CategoryManagemt />
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 ">
+                <div className="text-center py-4">
+                    <CategoryManagement />
 
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
