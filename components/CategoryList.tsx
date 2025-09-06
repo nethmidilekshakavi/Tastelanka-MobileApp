@@ -1,9 +1,11 @@
 import { db } from "@/config/firebaseConfig";
+import { Category } from "@/types/Category";
 import {addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import {Alert, FlatList, Modal, TextInput, TouchableOpacity, View,Text} from "react-native";
+import {Alert, FlatList, Modal, TextInput, TouchableOpacity, View,Text,StyleSheet,
+} from "react-native";
 
-const CategoryManagement = () => {
+export const CategoryManagemt = () => {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
@@ -15,7 +17,7 @@ const CategoryManagement = () => {
         const q = collection(db, "categories");
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const list: Category[] = snapshot.docs.map(doc => ({
-                id: doc.id,
+                cid: doc.id,
                 ...(doc.data() as any)
             }));
             setCategories(list);

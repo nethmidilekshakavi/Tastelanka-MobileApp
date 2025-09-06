@@ -16,6 +16,8 @@ import {
     Eye
 } from 'lucide-react';
 import UsersList from "@/components/UsersList";
+import CategorysScreen from "@/app/Category";
+import {CategoryList, CategoryManagemt} from "@/components/CategoryList";
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
@@ -201,32 +203,19 @@ const AdminDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {['Main Courses', 'Appetizers', 'Desserts', 'Beverages', 'Salads', 'Soups'].map((category, index) => (
-                    <div key={index} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className={`p-3 rounded-xl ${
-                                ['bg-red-100', 'bg-yellow-100', 'bg-pink-100', 'bg-blue-100', 'bg-green-100', 'bg-purple-100'][index]
-                            }`}>
-                                <ChefHat className={`${
-                                    ['text-red-600', 'text-yellow-600', 'text-pink-600', 'text-blue-600', 'text-green-600', 'text-purple-600'][index]
-                                }`} size={20} />
-                            </div>
-                            <div className="text-right">
-                                <div className="text-sm text-gray-500">{Math.floor(Math.random() * 50) + 10}</div>
-                                <div className="text-xs text-gray-400">recipes</div>
-                            </div>
-                        </div>
-                        <h3 className="text-lg font-bold text-gray-800 mb-4">{category}</h3>
-                        <div className="flex gap-2">
-                            <button className="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg text-sm hover:bg-blue-600 transition-colors">
-                                Edit
-                            </button>
-                            <button className="flex-1 bg-red-500 text-white py-2 px-3 rounded-lg text-sm hover:bg-red-600 transition-colors">
-                                Delete
-                            </button>
+                <div className="p-6">
+                    <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 text-white mb-6">
+                        <h1 className="text-2xl font-bold mb-2">User Management</h1>
+                        <p className="text-blue-100">Manage and monitor all users on your platform</p>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 ">
+                        <div className="text-center py-4">
+                            <CategoryManagemt />
+
                         </div>
                     </div>
-                ))}
+                </div>
             </div>
         </div>
     );

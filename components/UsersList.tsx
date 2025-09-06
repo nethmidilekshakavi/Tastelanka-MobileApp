@@ -37,9 +37,6 @@ type UserDoc = {
 const DEFAULT_PROFILE_PIC =
     "https://i.pinimg.com/736x/d9/7b/bb/d97bbb08017ac2309307f0822e63d082.jpg";
 
-const deleteUser = httpsCallable(functions, "deleteUserAccount");
-
-
 const UsersList = () => {
     const [users, setUsers] = useState<UserDoc[]>([]);
     const [loading, setLoading] = useState(true);
