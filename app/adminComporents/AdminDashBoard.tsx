@@ -191,12 +191,6 @@ const AdminDashboard = () => {
 
     const renderCategoryManagement = () => (
         <div className="p-6">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 text-white mb-6">
-                <h1 className="text-2xl font-bold mb-2">Category Management</h1>
-                <p className="text-blue-100">Manage and monitor all users on your platform</p>
-            </div>
-
-
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 ">
                 <div className="text-center py-4">
                     <CategoryManagement />

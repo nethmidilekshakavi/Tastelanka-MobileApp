@@ -11,10 +11,10 @@ import {
     Modal,
     TextInput,
     StyleSheet,
+    SafeAreaView,
 } from "react-native";
 
-import { auth, db ,functions } from "@/config/firebaseConfig";
-
+import { auth, db, functions } from "@/config/firebaseConfig";
 
 import {
     collection,
@@ -23,9 +23,11 @@ import {
     onSnapshot,
     doc,
     updateDoc,
-    getDoc, deleteDoc,
+    getDoc,
+    deleteDoc,
 } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
+
 type UserDoc = {
     uid: string;
     fullName?: string;
@@ -39,15 +41,31 @@ const DEFAULT_PROFILE_PIC =
 
 const UsersList = () => {
     const [users, setUsers] = useState<UserDoc[]>([]);
+    const [filteredUsers, setFilteredUsers] = useState<UserDoc[]>([]);
     const [loading, setLoading] = useState(true);
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [selectedUser, setSelectedUser] = useState<UserDoc | null>(null);
     const [updatedName, setUpdatedName] = useState("");
     const [updatedRole, setUpdatedRole] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
 
     // 🔹 Current user + role
     const [currentUser, setCurrentUser] = useState<any>(null);
     const [currentUserRole, setCurrentUserRole] = useState<string>("user");
+
+    // Filter users based on search query
+    useEffect(() => {
+        if (!searchQuery.trim()) {
+            setFilteredUsers(users);
+        } else {
+            const filtered = users.filter((user) =>
+                user.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                user.role?.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setFilteredUsers(filtered);
+        }
+    }, [users, searchQuery]);
 
     // Fetch users list
     useEffect(() => {
@@ -94,18 +112,22 @@ const UsersList = () => {
     }, []);
 
     // Delete user
-    const handleDelete = async (uid: string) => {
+    const handleDelete = async (userId: string | undefined) => {
+        if (!userId) {
+            Alert.alert("Error", "User ID is undefined!");
+            return;
+        }
+
         try {
-            const userRef = doc(db, "users", uid);
-            await deleteDoc(userRef);
+            const userRef = doc(db, "users", userId);  // Firestore document reference
+            await deleteDoc(userRef);                  // Delete document
+            setSelectedUser(null);
             Alert.alert("Success", "User deleted successfully!");
-            // Optionally refresh the user list or state
         } catch (error) {
             console.error("Error deleting user:", error);
             Alert.alert("Error", "Failed to delete user");
         }
     };
-
 
     // Open edit modal
     const handleEdit = (user: UserDoc) => {
@@ -148,355 +170,571 @@ const UsersList = () => {
 
     if (loading) {
         return (
-            <View>
-                <ActivityIndicator size="large" color="#3B82F6" />
-                <Text style={styles.loadingText}>Loading users...</Text>
-            </View>
-        );
-    }
-
-    if (!users.length) {
-        return (
-            <View>
-                <Text style={styles.emptyText}>No users found</Text>
-                <Text style={styles.emptySubText}>
-                    Users will appear here once they register
-                </Text>
-            </View>
+            <SafeAreaView style={styles.container}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#2563EB" />
+                    <Text style={styles.loadingText}>Loading users...</Text>
+                </View>
+            </SafeAreaView>
         );
     }
 
     return (
-        <View>
-            <Text style={styles.subtitle}>👥 Total Users: {users.length}</Text>
+        <SafeAreaView style={styles.container}>
+            <View style={styles.content}>
+                {/* Header */}
+                <View style={styles.header}>
+                    <Text style={styles.title}>User Management</Text>
+                    <TouchableOpacity style={styles.addButton}>
+                        <Text style={styles.addButtonText}>+</Text>
+                    </TouchableOpacity>
+                </View>
 
-            {/* Table Header */}
-            <View style={styles.tableHeader}>
-                <View style={styles.headerCell}>
-                    <Text style={styles.headerText}>Profile</Text>
+                {/* Search and Filter Bar */}
+                <View style={styles.searchContainer}>
+                    <View style={styles.searchInputContainer}>
+                        <Text style={styles.searchIcon}>🔍</Text>
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="Search users..."
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            placeholderTextColor="#9CA3AF"
+                        />
+                    </View>
+                    <TouchableOpacity style={styles.filterButton}>
+                        <Text style={styles.filterIcon}>⚙️</Text>
+                        <Text style={styles.filterText}>Filter</Text>
+                    </TouchableOpacity>
                 </View>
-                <View style={[styles.headerCell, styles.nameColumn]}>
-                    <Text style={styles.headerText}>Full Name</Text>
-                </View>
-                <View style={[styles.headerCell, styles.emailColumn]}>
-                    <Text style={styles.headerText}>Email</Text>
-                </View>
-                <View style={styles.headerCell}>
-                    <Text style={styles.headerText}>Role</Text>
-                </View>
-                <View style={styles.headerCell}>
-                    <Text style={styles.headerText}>Actions</Text>
-                </View>
-            </View>
 
-            {/* Users */}
-            <FlatList
-                data={users}
-                keyExtractor={(item) => item.uid}
-                showsVerticalScrollIndicator={false}
-                renderItem={({ item, index }) => (
-                    <View
-                        style={[
-                            styles.tableRow,
-                            index % 2 === 0 ? styles.evenRow : styles.oddRow,
-                        ]}
-                    >
-                        {/* Profile */}
-                        <View style={styles.cell}>
-                            <Image
-                                source={{ uri: item.photoURL || DEFAULT_PROFILE_PIC }}
-                                style={styles.profileImage}
-                            />
+                {filteredUsers.length === 0 ? (
+                    <View style={styles.emptyState}>
+                        <Text style={styles.emptyIcon}>👥</Text>
+                        <Text style={styles.emptyTitle}>
+                            {searchQuery ? "No users found" : "No users yet"}
+                        </Text>
+                        <Text style={styles.emptySubtitle}>
+                            {searchQuery
+                                ? "Try adjusting your search terms"
+                                : "Users will appear here once they register"
+                            }
+                        </Text>
+                    </View>
+                ) : (
+                    <View style={styles.tableContainer}>
+                        {/* Table Header */}
+                        <View style={styles.tableHeader}>
+                            <Text style={[styles.headerCell, { flex: 1 }]}>NAME</Text>
+                            <Text style={[styles.headerCell, { flex: 1.5 }]}>EMAIL</Text>
+                            <Text style={[styles.headerCell, { flex: 0.8 }]}>ROLE</Text>
+                            <Text style={[styles.headerCell, { flex: 0.8, textAlign: 'center' }]}>ACTIONS</Text>
                         </View>
 
-                        {/* Full Name */}
-                        <View style={[styles.cell, styles.nameColumn]}>
-                            <Text style={styles.nameText} numberOfLines={2}>
-                                {item.fullName || "No Name"}
-                            </Text>
-                        </View>
+                        {/* Users List */}
+                        <FlatList
+                            data={filteredUsers}
+                            keyExtractor={(item) => item.uid}
+                            showsVerticalScrollIndicator={false}
+                            renderItem={({ item, index }) => (
+                                <View style={styles.tableRow}>
+                                    {/* Name with Profile */}
+                                    <View style={[styles.nameCell, { flex: 1 }]}>
+                                        <Image
+                                            source={{ uri: item.photoURL || DEFAULT_PROFILE_PIC }}
+                                            style={styles.profileImage}
+                                        />
+                                        <Text style={styles.nameText} numberOfLines={1}>
+                                            {item.fullName || "No Name"}
+                                        </Text>
+                                    </View>
 
-                        {/* Email */}
-                        <View style={[styles.cell, styles.emailColumn]}>
-                            <Text style={styles.emailText} numberOfLines={2}>
-                                {item.email || "No Email"}
-                            </Text>
-                        </View>
+                                    {/* Email */}
+                                    <View style={[styles.cell, { flex: 1.5 }]}>
+                                        <Text style={styles.emailText} numberOfLines={1}>
+                                            {item.email || "No Email"}
+                                        </Text>
+                                    </View>
 
-                        {/* Role */}
-                        <View style={styles.cell}>
-                            <View
-                                style={[
-                                    styles.roleBadge,
-                                    item.role === "admin" ? styles.adminBadge : styles.userBadge,
-                                ]}
-                            >
-                                <Text
-                                    style={[
-                                        styles.roleText,
-                                        item.role === "admin" ? styles.adminText : styles.userText,
-                                    ]}
-                                >
-                                    {(item.role || "user").toUpperCase()}
-                                </Text>
-                            </View>
-                        </View>
+                                    {/* Role */}
+                                    <View style={[styles.cell, { flex: 0.8 }]}>
+                                        <View
+                                            style={[
+                                                styles.roleBadge,
+                                                item.role === "admin" ? styles.adminBadge : styles.userBadge,
+                                            ]}
+                                        >
+                                            <Text
+                                                style={[
+                                                    styles.roleText,
+                                                    item.role === "admin" ? styles.adminText : styles.userText,
+                                                ]}
+                                            >
+                                                {(item.role || "User")}
+                                            </Text>
+                                        </View>
+                                    </View>
 
-                        {/* Actions */}
-                        <View style={styles.cell}>
-                            <View style={styles.actionButtons}>
-                                <TouchableOpacity
-                                    style={styles.editButton}
-                                    onPress={() => handleEdit(item)}
-                                >
-                                    <Text style={styles.editButtonText}>✏️ Edit</Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity
-                                    style={styles.deleteButton}
-                                    onPress={() => handleDelete(item.uid, item.fullName || "User")}
-                                >
-                                    <Text style={styles.deleteButtonText}>🗑️ Delete</Text>
-                                </TouchableOpacity>
-
-                            </View>
-                        </View>
+                                    {/* Actions */}
+                                    <View style={[styles.actionsCell, { flex: 0.8 }]}>
+                                        <TouchableOpacity
+                                            style={styles.editIcon}
+                                            onPress={() => handleEdit(item)}
+                                        >
+                                            <Text style={styles.actionIcon}>✏️</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={styles.deleteIcon}
+                                            onPress={() => handleDelete(item.uid, item.fullName || "User")}
+                                        >
+                                            <Text style={styles.actionIcon}>🗑️</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            )}
+                        />
                     </View>
                 )}
-                ItemSeparatorComponent={() => <View style={styles.separator} />}
-            />
 
-            {/* Edit Modal */}
-            <Modal
-                visible={editModalVisible}
-                transparent
-                animationType="slide"
-                onRequestClose={handleCloseModal}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>✏️ Edit User Details</Text>
-
-                        {selectedUser && (
-                            <View style={styles.userInfo}>
-                                <Image
-                                    source={{
-                                        uri: selectedUser.photoURL || DEFAULT_PROFILE_PIC,
-                                    }}
-                                    style={styles.modalProfileImage}
-                                />
-                                <Text style={styles.modalUserEmail}>
-                                    {selectedUser.email}
-                                </Text>
+                {/* Edit Modal */}
+                <Modal
+                    visible={editModalVisible}
+                    transparent
+                    animationType="fade"
+                    onRequestClose={handleCloseModal}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                            <View style={styles.modalHeader}>
+                                <Text style={styles.modalTitle}>Edit User</Text>
+                                <TouchableOpacity
+                                    style={styles.closeButton}
+                                    onPress={handleCloseModal}
+                                >
+                                    <Text style={styles.closeButtonText}>×</Text>
+                                </TouchableOpacity>
                             </View>
-                        )}
 
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Full Name *</Text>
-                            <TextInput
-                                value={updatedName}
-                                onChangeText={setUpdatedName}
-                                style={styles.textInput}
-                                placeholder="Enter full name"
-                            />
-                        </View>
+                            {selectedUser && (
+                                <View style={styles.modalBody}>
+                                    <View style={styles.userInfo}>
+                                        <Image
+                                            source={{
+                                                uri: selectedUser.photoURL || DEFAULT_PROFILE_PIC,
+                                            }}
+                                            style={styles.modalProfileImage}
+                                        />
+                                        <Text style={styles.modalUserEmail}>
+                                            {selectedUser.email}
+                                        </Text>
+                                    </View>
 
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Role</Text>
-                            <TextInput
-                                value={updatedRole}
-                                onChangeText={setUpdatedRole}
-                                style={styles.textInput}
-                                placeholder="user or admin"
-                            />
-                        </View>
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.inputLabel}>Full Name</Text>
+                                        <TextInput
+                                            value={updatedName}
+                                            onChangeText={setUpdatedName}
+                                            style={styles.textInput}
+                                            placeholder="Enter full name"
+                                            placeholderTextColor="#9CA3AF"
+                                        />
+                                    </View>
 
-                        <View style={styles.modalButtons}>
-                            <TouchableOpacity
-                                style={styles.cancelButton}
-                                onPress={handleCloseModal}
-                            >
-                                <Text style={styles.cancelButtonText}>❌ Cancel</Text>
-                            </TouchableOpacity>
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.inputLabel}>Role</Text>
+                                        <TextInput
+                                            value={updatedRole}
+                                            onChangeText={setUpdatedRole}
+                                            style={styles.textInput}
+                                            placeholder="user or admin"
+                                            placeholderTextColor="#9CA3AF"
+                                        />
+                                    </View>
+                                </View>
+                            )}
 
-                            <TouchableOpacity
-                                style={styles.saveButton}
-                                onPress={handleSave}
-                            >
-                                <Text style={styles.saveButtonText}>💾 Save</Text>
-                            </TouchableOpacity>
+                            <View style={styles.modalFooter}>
+                                <TouchableOpacity
+                                    style={styles.cancelButton}
+                                    onPress={handleCloseModal}
+                                >
+                                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.saveButton}
+                                    onPress={handleSave}
+                                >
+                                    <Text style={styles.saveButtonText}>Save Changes</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
-                </View>
-            </Modal>
-        </View>
+                </Modal>
+            </View>
+        </SafeAreaView>
     );
 };
 
-
-
-
 const styles = StyleSheet.create({
-    subtitle: {
-        fontSize: 20,
-        color: "#2563EB",
-        marginBottom: 20,
-        fontWeight: "bold",
+    container: {
+        flex: 1,
+        backgroundColor: "#F9FAFB",
+    },
+    content: {
+        flex: 1,
+        padding: 24,
+    },
+
+    // Loading State
+    loadingContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
     },
     loadingText: {
         marginTop: 12,
-        color: "#6B7280",
         fontSize: 16,
+        color: "#6B7280",
+        fontWeight: "500",
     },
-    emptyText: {
+
+    // Header
+    header: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 24,
+    },
+    title: {
+        fontSize: 32,
+        fontWeight: "700",
+        color: "#111827",
+    },
+    addButton: {
+        backgroundColor: "#2563EB",
+        width: 40,
+        height: 40,
+        borderRadius: 8,
+        alignItems: "center",
+        justifyContent: "center",
+        shadowColor: "#2563EB",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    addButtonText: {
+        color: "#FFFFFF",
         fontSize: 20,
-        color: "#EF4444",
-        textAlign: "center",
-        marginBottom: 8,
-        fontWeight: "bold",
+        fontWeight: "600",
     },
-    emptySubText: {
+
+    // Search and Filter
+    searchContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        marginBottom: 24,
+    },
+    searchInputContainer: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#FFFFFF",
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+    },
+    searchIcon: {
+        fontSize: 16,
+        marginRight: 8,
+        color: "#6B7280",
+    },
+    searchInput: {
+        flex: 1,
         fontSize: 14,
-        color: "#9CA3AF",
+        color: "#111827",
+    },
+    filterButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#FFFFFF",
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+    },
+    filterIcon: {
+        fontSize: 16,
+        marginRight: 6,
+    },
+    filterText: {
+        fontSize: 14,
+        color: "#6B7280",
+        fontWeight: "500",
+    },
+
+    // Empty State
+    emptyState: {
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 60,
+        backgroundColor: "#FFFFFF",
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+        borderStyle: "dashed",
+    },
+    emptyIcon: {
+        fontSize: 48,
+        marginBottom: 16,
+    },
+    emptyTitle: {
+        fontSize: 18,
+        fontWeight: "600",
+        color: "#374151",
+        marginBottom: 8,
+    },
+    emptySubtitle: {
+        fontSize: 14,
+        color: "#6B7280",
         textAlign: "center",
     },
 
+    // Table
+    tableContainer: {
+        backgroundColor: "#FFFFFF",
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+        overflow: "hidden",
+        flex: 1,
+    },
     tableHeader: {
         flexDirection: "row",
-        backgroundColor: "#93C5FD",
+        backgroundColor: "#F9FAFB",
         paddingVertical: 12,
-        paddingHorizontal: 8,
-        borderTopLeftRadius: 8,
-        borderTopRightRadius: 8,
-        borderBottomWidth: 2,
-        borderBottomColor: "#3B82F6",
+        paddingHorizontal: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "#E5E7EB",
     },
-    headerCell: { flex: 1, alignItems: "center", paddingHorizontal: 4 },
-    nameColumn: { flex: 2 },
-    emailColumn: { flex: 2 },
-    headerText: {
-        fontWeight: "700",
-        color: "#1E3A8A",
-        fontSize: 14,
+    headerCell: {
+        fontSize: 12,
+        fontWeight: "600",
+        color: "#374151",
+        textTransform: "uppercase",
+        letterSpacing: 0.5,
     },
-
     tableRow: {
         flexDirection: "row",
         paddingVertical: 12,
-        paddingHorizontal: 8,
+        paddingHorizontal: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "#F3F4F6",
+        alignItems: "center",
+        minHeight: 56,
+    },
+
+    // Cells
+    nameCell: {
+        flexDirection: "row",
         alignItems: "center",
     },
-    evenRow: { backgroundColor: "#E0F2FE" },
-    oddRow: { backgroundColor: "#FFFFFF" },
-    separator: { height: 1, backgroundColor: "#BFDBFE" },
-
-    cell: { flex: 1, alignItems: "center", paddingHorizontal: 4 },
-
-    profileImage: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        borderWidth: 2,
-        borderColor: "#3B82F6",
+    cell: {
+        justifyContent: "center",
+    },
+    actionsCell: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
     },
 
+    // Profile & Text
+    profileImage: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        marginRight: 12,
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+    },
     nameText: {
         fontSize: 14,
+        fontWeight: "500",
         color: "#111827",
-        fontWeight: "600",
-        textAlign: "center",
+        flex: 1,
     },
-    emailText: { fontSize: 12, color: "#4B5563", textAlign: "center" },
+    emailText: {
+        fontSize: 14,
+        color: "#6B7280",
+    },
 
+    // Role Badge
     roleBadge: {
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 12,
-        minWidth: 60,
+        alignItems: "center",
     },
-    adminBadge: { backgroundColor: "#FECACA" },
-    userBadge: { backgroundColor: "#BBF7D0" },
-    roleText: { fontSize: 10, fontWeight: "700", textAlign: "center" },
-    adminText: { color: "#B91C1C" },
-    userText: { color: "#047857" },
+    adminBadge: {
+        backgroundColor: "#DBEAFE",
+    },
+    userBadge: {
+        backgroundColor: "#D1FAE5",
+    },
+    roleText: {
+        fontSize: 12,
+        fontWeight: "500",
+        textTransform: "capitalize",
+    },
+    adminText: {
+        color: "#1E40AF",
+    },
+    userText: {
+        color: "#059669",
+    },
 
-    actionButtons: { flexDirection: "row", gap: 6 },
-    editButton: {
-        backgroundColor: "#2563EB",
-        paddingHorizontal: 10,
-        paddingVertical: 5,
+    // Action Icons
+    editIcon: {
+        padding: 6,
         borderRadius: 6,
+        backgroundColor: "#F3F4F6",
     },
-    editButtonText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
-    deleteButton: {
-        backgroundColor: "#DC2626",
-        paddingHorizontal: 10,
-        paddingVertical: 5,
+    deleteIcon: {
+        padding: 6,
         borderRadius: 6,
+        backgroundColor: "#F3F4F6",
     },
-    deleteButtonText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
+    actionIcon: {
+        fontSize: 16,
+    },
 
+    // Modal Styles
     modalOverlay: {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "rgba(0,0,0,0.5)",
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
         padding: 20,
     },
     modalContent: {
         backgroundColor: "#FFFFFF",
-        padding: 24,
-        borderRadius: 12,
         width: "100%",
         maxWidth: 400,
+        borderRadius: 16,
+        overflow: "hidden",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.25,
+        shadowRadius: 15,
+        elevation: 10,
+    },
+    modalHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: 20,
+        backgroundColor: "#F8FAFC",
+        borderBottomWidth: 1,
+        borderBottomColor: "#E2E8F0",
     },
     modalTitle: {
-        fontSize: 20,
-        fontWeight: "bold",
-        color: "#2563EB",
-        marginBottom: 16,
-        textAlign: "center",
+        fontSize: 18,
+        fontWeight: "700",
+        color: "#1E293B",
     },
-    userInfo: { alignItems: "center", marginBottom: 20 },
-    modalProfileImage: { width: 60, height: 60, borderRadius: 30, marginBottom: 8 },
-    modalUserEmail: { fontSize: 14, color: "#6B7280" },
-
-    inputGroup: { marginBottom: 16 },
+    closeButton: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: "#E2E8F0",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    closeButtonText: {
+        fontSize: 16,
+        color: "#64748B",
+        fontWeight: "bold",
+    },
+    modalBody: {
+        padding: 20,
+    },
+    userInfo: {
+        alignItems: "center",
+        marginBottom: 20,
+    },
+    modalProfileImage: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        marginBottom: 8,
+        borderWidth: 2,
+        borderColor: "#E5E7EB",
+    },
+    modalUserEmail: {
+        fontSize: 14,
+        color: "#6B7280",
+    },
+    inputGroup: {
+        marginBottom: 16,
+    },
     inputLabel: {
         fontSize: 14,
-        fontWeight: "700",
+        fontWeight: "600",
         color: "#374151",
         marginBottom: 8,
     },
     textInput: {
         borderWidth: 1,
-        borderColor: "#93C5FD",
+        borderColor: "#E5E7EB",
         borderRadius: 8,
         padding: 12,
-        fontSize: 16,
-        color: "#1F2937",
-        backgroundColor: "#F9FAFB",
+        fontSize: 14,
+        color: "#111827",
+        backgroundColor: "#FAFAFA",
     },
-    modalButtons: {
+    modalFooter: {
         flexDirection: "row",
         justifyContent: "flex-end",
         gap: 12,
-        marginTop: 20,
+        padding: 20,
+        backgroundColor: "#F8FAFC",
+        borderTopWidth: 1,
+        borderTopColor: "#E2E8F0",
     },
     cancelButton: {
-        backgroundColor: "#6B7280",
-        paddingHorizontal: 16,
         paddingVertical: 10,
-        borderRadius: 6,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        backgroundColor: "#F1F5F9",
+        borderWidth: 1,
+        borderColor: "#CBD5E1",
     },
-    cancelButtonText: { color: "#FFFFFF", fontWeight: "700" },
+    cancelButtonText: {
+        color: "#64748B",
+        fontWeight: "600",
+        fontSize: 14,
+    },
     saveButton: {
-        backgroundColor: "#10B981",
-        paddingHorizontal: 16,
         paddingVertical: 10,
-        borderRadius: 6,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        backgroundColor: "#2563EB",
+        shadowColor: "#2563EB",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 3,
     },
-    saveButtonText: { color: "#FFFFFF", fontWeight: "700" },
+    saveButtonText: {
+        color: "#FFFFFF",
+        fontWeight: "600",
+        fontSize: 14,
+    },
 });
 
 export default UsersList;

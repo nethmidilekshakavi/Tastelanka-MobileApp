@@ -1,30 +1,40 @@
 import { db } from "@/config/firebaseConfig";
 import { Category } from "@/types/Category";
-import {addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-import {Alert, FlatList, Modal, TextInput, TouchableOpacity, View, Text, StyleSheet, ActivityIndicator, SafeAreaView} from "react-native";
+import {
+    Alert,
+    FlatList,
+    TextInput,
+    TouchableOpacity,
+    View,
+    Text,
+    StyleSheet,
+    ActivityIndicator,
+    SafeAreaView,
+} from "react-native";
 
 export const CategoryManagement = () => {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
-    const [modalVisible, setModalVisible] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
     const [categoryName, setCategoryName] = useState("");
+    const [categoryDescription, setCategoryDescription] = useState("");
+
 
     // Fetch categories
     useEffect(() => {
         const q = collection(db, "categories");
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const list: Category[] = snapshot.docs.map(doc => ({
+            const list: Category[] = snapshot.docs.map((doc) => ({
                 cid: doc.id,
-                ...(doc.data() as any)
+                ...(doc.data() as any),
             }));
             setCategories(list);
             setLoading(false);
         });
         return () => unsubscribe();
     }, []);
-
 
     // Add or Update Category
     const handleSave = async () => {
@@ -37,15 +47,21 @@ export const CategoryManagement = () => {
             if (selectedCategory) {
                 // Update
                 const catRef = doc(db, "categories", selectedCategory.cid);
-                await updateDoc(catRef, { name: categoryName.trim() });
+                await updateDoc(catRef, {
+                    name: categoryName.trim(),
+                    description: categoryDescription.trim(),
+                });
             } else {
                 // Add
-                await addDoc(collection(db, "categories"), { name: categoryName.trim() });
+                await addDoc(collection(db, "categories"), {
+                    name: categoryName.trim(),
+                    description: categoryDescription.trim(),
+                });
             }
 
-            setModalVisible(false);
             setSelectedCategory(null);
             setCategoryName("");
+            setCategoryDescription("");
             Alert.alert("Success", "Category saved successfully!");
         } catch (err) {
             console.error("Error saving category:", err);
@@ -55,42 +71,39 @@ export const CategoryManagement = () => {
 
     // Delete Category with confirmation
     const confirmDelete = (cid: string, name: string) => {
-        Alert.alert(
-            "Delete Category",
-            `Are you sure you want to delete "${name}"?`,
-            [
-                { text: "Cancel", style: "cancel" },
-                { text: "Delete", style: "destructive", onPress: () => handleDelete(cid) }
-            ]
-        );
+        Alert.alert("Delete Category", `Are you sure you want to delete "${name}"?`, [
+            { text: "Cancel", style: "cancel" },
+            { text: "Delete", style: "destructive", onPress: () => handleDelete(cid) },
+        ]);
     };
 
-    const handleDelete = async (cid: string) => {
-        try {
-            const cateRef = doc(db, "categories", cid);
-            await deleteDoc(cateRef);
-            Alert.alert("Success", "Category deleted successfully!");
-        } catch (error) {
-            console.error("Error deleting Category:", error);
-            Alert.alert("Error", "Failed to delete Category");
+    const handleDelete = (item: Category) => {
+        if (!categories) return;  // guard
+        const index = categories.indexOf(item);
+        if (index !== -1) {
+            const updated = [...categories];
+            updated.splice(index, 1);
+            setCategories(updated);
         }
     };
+
 
     const openEditModal = (category: Category | null = null) => {
         if (category) {
             setSelectedCategory(category);
             setCategoryName(category.name);
+            setCategoryDescription(category.description || "");
         } else {
             setSelectedCategory(null);
             setCategoryName("");
+            setCategoryDescription("");
         }
-        setModalVisible(true);
     };
 
-    const closeModal = () => {
-        setModalVisible(false);
+    const cancelEdit = () => {
         setSelectedCategory(null);
         setCategoryName("");
+        setCategoryDescription("");
     };
 
     if (loading) {
@@ -105,129 +118,145 @@ export const CategoryManagement = () => {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.content}>
-                {/* Header */}
-                <View style={styles.header}>
-                    <View style={styles.headerContent}>
-                        <Text style={styles.headerIcon}>🏷️</Text>
-                        <View>
-                            <Text style={styles.headerTitle}>Categories</Text>
-                            <Text style={styles.headerSubtitle}>
-                                {categories.length} {categories.length === 1 ? 'category' : 'categories'}
-                            </Text>
-                        </View>
+                {/* Main Header */}
+                <View style={styles.mainHeader}>
+                    <View>
+                        <Text style={styles.mainTitle}>Category Management</Text>
+                        <Text style={styles.mainSubtitle}>Add, edit, and manage your categories.</Text>
                     </View>
+
                 </View>
 
-                {/* Add Category Button */}
-                <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={() => openEditModal()}
-                    activeOpacity={0.8}
-                >
-                    <Text style={styles.addButtonIcon}>+</Text>
-                    <Text style={styles.addButtonText}>Add New Category</Text>
-                </TouchableOpacity>
+                <View style={styles.mainContent}>
+                    {/* Left Side - Add Form */}
+                    <View style={styles.leftPanel}>
+                        <View style={styles.formCard}>
+                            <Text style={styles.formTitle}>
+                                {selectedCategory ? "Edit Category" : "Add New Category"}
+                            </Text>
+                            <Text style={styles.formSubtitle}>
+                                {selectedCategory
+                                    ? "Update the category details below."
+                                    : "Fill in the details below to create a new category."}
+                            </Text>
 
-                {/* Categories List */}
-                {categories.length === 0 ? (
-                    <View style={styles.emptyState}>
-                        <Text style={styles.emptyIcon}>📂</Text>
-                        <Text style={styles.emptyTitle}>No Categories Yet</Text>
-                        <Text style={styles.emptySubtitle}>
-                            Create your first category to get started
-                        </Text>
-                    </View>
-                ) : (
-                    <FlatList
-                        data={categories}
-                        keyExtractor={(item) => item.cid}
-                        renderItem={({ item, index }) => (
-                            <View style={[styles.categoryCard, { marginTop: index === 0 ? 0 : 12 }]}>
-                                <View style={styles.categoryContent}>
-                                    <View style={styles.categoryIcon}>
-                                        <Text style={styles.categoryIconText}>#</Text>
-                                    </View>
-                                    <View style={styles.categoryInfo}>
-                                        <Text style={styles.categoryName}>{item.name}</Text>
-                                        <Text style={styles.categoryId}>ID: {item.cid}</Text>
-                                    </View>
-                                </View>
-                                <View style={styles.actions}>
-                                    <TouchableOpacity
-                                        style={styles.editButton}
-                                        onPress={() => openEditModal(item)}
-                                        activeOpacity={0.7}
-                                    >
-                                        <Text style={styles.editButtonText}>✏️</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={styles.deleteButton}
-                                        onPress={() => handleDelete(item.cid, item.name || "categories")}
-                                    >
-                                        <Text style={styles.deleteButtonText}>🗑️ Delete</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        )}
-                        showsVerticalScrollIndicator={false}
-                        contentContainerStyle={{ paddingBottom: 20 }}
-                    />
-                )}
-
-                {/* Modal */}
-                <Modal
-                    visible={modalVisible}
-                    transparent
-                    animationType="fade"
-                    onRequestClose={closeModal}
-                >
-                    <View style={styles.modalOverlay}>
-                        <View style={styles.modalContent}>
-                            <View style={styles.modalHeader}>
-                                <Text style={styles.modalTitle}>
-                                    {selectedCategory ? "Edit Category" : "Add Category"}
-                                </Text>
-                                <TouchableOpacity
-                                    style={styles.closeButton}
-                                    onPress={closeModal}
-                                >
-                                    <Text style={styles.closeButtonText}>×</Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            <View style={styles.modalBody}>
-                                <Text style={styles.inputLabel}>Category Name</Text>
+                            <View style={styles.formGroup}>
+                                <Text style={styles.label}>Category Name</Text>
                                 <TextInput
                                     value={categoryName}
                                     onChangeText={setCategoryName}
-                                    placeholder="Enter category name"
-                                    style={styles.textInput}
-                                    autoFocus
+                                    placeholder="e.g. Customer Support"
+                                    style={styles.input}
                                     placeholderTextColor="#9CA3AF"
                                 />
                             </View>
 
-                            <View style={styles.modalFooter}>
-                                <TouchableOpacity
-                                    style={styles.cancelButton}
-                                    onPress={closeModal}
-                                    activeOpacity={0.8}
-                                >
-                                    <Text style={styles.cancelButtonText}>Cancel</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={styles.saveButton}
-                                    onPress={handleSave}
-                                    activeOpacity={0.8}
-                                >
-                                    <Text style={styles.saveButtonText}>
-                                        {selectedCategory ? "Update" : "Save"}
-                                    </Text>
-                                </TouchableOpacity>
+                            <View style={styles.formGroup}>
+                                <Text style={styles.label}>Description</Text>
+                                <TextInput
+                                    value={categoryDescription}
+                                    onChangeText={setCategoryDescription}
+                                    placeholder="A brief description of what this category is for."
+                                    style={[styles.input, styles.textArea]}
+                                    multiline={true}
+                                    numberOfLines={4}
+                                    placeholderTextColor="#9CA3AF"
+                                />
                             </View>
+
+                            <TouchableOpacity
+                                style={styles.submitButton}
+                                onPress={handleSave}
+                                activeOpacity={0.8}
+                            >
+                                <Text style={styles.submitButtonText}>
+                                    {selectedCategory ? "Update Category" : "Add Category"}
+                                </Text>
+                            </TouchableOpacity>
+
+                            {selectedCategory && (
+                                <TouchableOpacity
+                                    style={styles.cancelEditButton}
+                                    onPress={cancelEdit}
+                                    activeOpacity={0.8}
+                                >
+                                    <Text style={styles.cancelEditButtonText}>Cancel Edit</Text>
+                                </TouchableOpacity>
+                            )}
                         </View>
                     </View>
-                </Modal>
+
+                    {/* Right Side - Categories Table */}
+                    <View style={styles.rightPanel}>
+                        <View style={styles.tableCard}>
+                            {/* Table */}
+                            {categories.length === 0 ? (
+                                <View style={styles.emptyState}>
+                                    <Text style={styles.emptyIcon}>📂</Text>
+                                    <Text style={styles.emptyTitle}>No categories yet</Text>
+                                    <Text style={styles.emptySubtitle}>Create your first category to get started</Text>
+                                </View>
+                            ) : (
+                                <View style={styles.table}>
+                                    {/* Table Headers */}
+                                    <View style={styles.tableHeaderRow}>
+                                        <Text style={[styles.tableHeaderText, { flex: 2 }]}>CATEGORY NAME</Text>
+                                        <Text style={[styles.tableHeaderText, { flex: 3 }]}>DESCRIPTION</Text>
+                                        <Text style={[styles.tableHeaderText, { flex: 1, textAlign: 'right' }]}>
+                                            ACTIONS
+                                        </Text>
+                                    </View>
+
+                                    {/* Table Rows */}
+                                    <FlatList
+                                        data={categories}
+                                        keyExtractor={(item) => item.cid}
+                                        renderItem={({ item, index }) => (
+                                            <View
+                                                style={[
+                                                    styles.tableRow,
+                                                    index === categories.length - 1 && styles.lastRow,
+                                                ]}
+                                            >
+                                                <Text
+                                                    style={[styles.tableCellName, { flex: 2 }]}
+                                                    numberOfLines={1}
+                                                >
+                                                    {item.name}
+                                                </Text>
+                                                <Text
+                                                    style={[styles.tableCellDescription, { flex: 3 }]}
+                                                    numberOfLines={2}
+                                                >
+                                                    {item.description || "No description provided."}
+                                                </Text>
+                                                <View style={[styles.actionsCell, { flex: 1 }]}>
+                                                    <TouchableOpacity
+                                                        style={styles.editLink}
+                                                        onPress={() => openEditModal(item)}
+                                                        activeOpacity={0.7}
+                                                    >
+                                                        <Text style={styles.editLinkText}>Edit</Text>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity
+                                                        style={styles.editLink}
+                                                        onPress={() => confirmDelete(item.cid, item.name)}
+                                                        activeOpacity={0.7}
+                                                    >
+                                                        <Text style={[styles.editLinkText, { color: "red" }]}>
+                                                            Delete
+                                                        </Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            </View>
+                                        )}
+                                        showsVerticalScrollIndicator={false}
+                                    />
+                                </View>
+                            )}
+                        </View>
+                    </View>
+                </View>
             </View>
         </SafeAreaView>
     );
@@ -236,276 +265,246 @@ export const CategoryManagement = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F0FDF4", // Very light green background
+        backgroundColor: "#F9FAFB",
     },
     content: {
         flex: 1,
-        padding: 20,
+        padding: 24,
     },
+
+    // Loading
     loadingContainer: {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#F0FDF4",
     },
     loadingText: {
         marginTop: 12,
         fontSize: 16,
-        color: "#22C55E",
-        fontWeight: "500",
+        color: "#6B7280",
     },
 
-    // Header Styles
-    header: {
-        backgroundColor: "#FFFFFF",
-        borderRadius: 16,
-        padding: 20,
-        marginBottom: 20,
-        shadowColor: "#22C55E",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
-    },
-    headerContent: {
+    // Main Header
+    mainHeader: {
         flexDirection: "row",
-        alignItems: "center",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        marginBottom: 32,
     },
-    headerIcon: {
+    mainTitle: {
         fontSize: 32,
-        marginRight: 16,
-    },
-    headerTitle: {
-        fontSize: 24,
-        fontWeight: "bold",
-        color: "#065F46", // Dark green
+        fontWeight: "700",
+        color: "#111827",
         marginBottom: 4,
     },
-    headerSubtitle: {
-        fontSize: 14,
+    mainSubtitle: {
+        fontSize: 16,
         color: "#6B7280",
-        fontWeight: "500",
+        fontWeight: "400",
     },
-
-    // Add Button Styles
     addButton: {
-        backgroundColor: "#22C55E", // Main green
+        backgroundColor: "#2563EB",
         flexDirection: "row",
         alignItems: "center",
-        justifyContent: "center",
-        padding: 16,
-        borderRadius: 12,
-        marginBottom: 24,
-        shadowColor: "#22C55E",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 5,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderRadius: 8,
+        shadowColor: "#2563EB",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
     },
     addButtonIcon: {
-        fontSize: 20,
+        fontSize: 16,
         color: "#FFFFFF",
-        fontWeight: "bold",
+        fontWeight: "600",
         marginRight: 8,
     },
     addButtonText: {
         color: "#FFFFFF",
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: "600",
+    },
+
+    // Main Content Layout
+    mainContent: {
+        flex: 1,
+        flexDirection: "row",
+        gap: 24,
+    },
+
+    // Left Panel - Form
+    leftPanel: {
+        flex: 1,
+        maxWidth: 400,
+    },
+    formCard: {
+        backgroundColor: "#FFFFFF",
+        borderRadius: 12,
+        padding: 24,
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 3,
+        elevation: 1,
+    },
+    formTitle: {
+        fontSize: 20,
+        fontWeight: "600",
+        color: "#111827",
+        marginBottom: 8,
+    },
+    formSubtitle: {
+        fontSize: 14,
+        color: "#6B7280",
+        marginBottom: 24,
+        lineHeight: 20,
+    },
+    formGroup: {
+        marginBottom: 20,
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: "500",
+        color: "#374151",
+        marginBottom: 8,
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: "#D1D5DB",
+        borderRadius: 8,
+        padding: 12,
+        fontSize: 14,
+        color: "#111827",
+        backgroundColor: "#FFFFFF",
+    },
+    textArea: {
+        height: 96,
+        textAlignVertical: "top",
+    },
+    submitButton: {
+        backgroundColor: "#2563EB",
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        alignItems: "center",
+        marginBottom: 12,
+    },
+    submitButtonText: {
+        color: "#FFFFFF",
+        fontSize: 14,
+        fontWeight: "600",
+    },
+    cancelEditButton: {
+        backgroundColor: "#F3F4F6",
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#D1D5DB",
+    },
+    cancelEditButtonText: {
+        color: "#6B7280",
+        fontSize: 14,
+        fontWeight: "500",
+    },
+
+    // Right Panel - Table
+    rightPanel: {
+        flex: 2,
+    },
+    tableCard: {
+        backgroundColor: "#FFFFFF",
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 3,
+        elevation: 1,
+        overflow: "hidden",
+    },
+
+    // Table
+    table: {
+        flex: 1,
+    },
+    tableHeaderRow: {
+        flexDirection: "row",
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: "#F9FAFB",
+        borderBottomWidth: 1,
+        borderBottomColor: "#E5E7EB",
+    },
+    tableHeaderText: {
+        fontSize: 12,
+        fontWeight: "600",
+        color: "#374151",
+        textTransform: "uppercase",
+        letterSpacing: 0.5,
+    },
+    tableRow: {
+        flexDirection: "row",
+        paddingHorizontal: 16,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "#F3F4F6",
+        alignItems: "flex-start",
+    },
+    lastRow: {
+        borderBottomWidth: 0,
+    },
+    tableCellName: {
+        fontSize: 14,
+        fontWeight: "500",
+        color: "#111827",
+        marginRight: 16,
+    },
+    tableCellDescription: {
+        fontSize: 14,
+        color: "#6B7280",
+        lineHeight: 20,
+        marginRight: 16,
+    },
+    actionsCell: {
+        alignItems: "flex-end",
+    },
+    editLink: {
+        paddingVertical: 4,
+        paddingHorizontal: 8,
+    },
+    editLinkText: {
+        fontSize: 14,
+        color: "#2563EB",
+        fontWeight: "500",
     },
 
     // Empty State
     emptyState: {
         alignItems: "center",
         justifyContent: "center",
-        paddingVertical: 60,
-        paddingHorizontal: 40,
+        paddingVertical: 48,
+        paddingHorizontal: 24,
     },
     emptyIcon: {
-        fontSize: 64,
+        fontSize: 48,
         marginBottom: 16,
     },
     emptyTitle: {
-        fontSize: 20,
-        fontWeight: "bold",
-        color: "#065F46",
-        marginBottom: 8,
-        textAlign: "center",
-    },
-    emptySubtitle: {
-        fontSize: 16,
-        color: "#6B7280",
-        textAlign: "center",
-        lineHeight: 24,
-    },
-
-    // Category Card Styles
-    categoryCard: {
-        backgroundColor: "#FFFFFF",
-        borderRadius: 12,
-        padding: 16,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        borderLeftWidth: 4,
-        borderLeftColor: "#22C55E",
-        shadowColor: "#000000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 6,
-        elevation: 2,
-    },
-    categoryContent: {
-        flexDirection: "row",
-        alignItems: "center",
-        flex: 1,
-    },
-    categoryIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: "#DCFCE7", // Light green
-        alignItems: "center",
-        justifyContent: "center",
-        marginRight: 12,
-    },
-    categoryIconText: {
         fontSize: 18,
-        color: "#22C55E",
-        fontWeight: "bold",
-    },
-    categoryInfo: {
-        flex: 1,
-    },
-    categoryName: {
-        fontSize: 16,
-        fontWeight: "600",
-        color: "#065F46",
-        marginBottom: 2,
-    },
-    categoryId: {
-        fontSize: 12,
-        color: "#9CA3AF",
-    },
-
-    // Action Buttons
-    actions: {
-        flexDirection: "row",
-        gap: 8,
-    },
-    editButton: {
-        backgroundColor: "#DCFCE7",
-        padding: 8,
-        borderRadius: 8,
-        minWidth: 36,
-        alignItems: "center",
-    },
-    editButtonText: {
-        fontSize: 16,
-    },
-    deleteButton: {
-        backgroundColor: "#FEE2E2",
-        padding: 8,
-        borderRadius: 8,
-        minWidth: 36,
-        alignItems: "center",
-    },
-    deleteButtonText: {
-        fontSize: 16,
-    },
-
-    // Modal Styles
-    modalOverlay: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        padding: 20,
-    },
-    modalContent: {
-        backgroundColor: "#FFFFFF",
-        width: "100%",
-        maxWidth: 400,
-        borderRadius: 16,
-        overflow: "hidden",
-    },
-    modalHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: 20,
-        backgroundColor: "#F0FDF4",
-        borderBottomWidth: 1,
-        borderBottomColor: "#E5E7EB",
-    },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: "bold",
-        color: "#065F46",
-    },
-    closeButton: {
-        width: 30,
-        height: 30,
-        borderRadius: 15,
-        backgroundColor: "#E5E7EB",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    closeButtonText: {
-        fontSize: 20,
-        color: "#6B7280",
-        fontWeight: "bold",
-    },
-    modalBody: {
-        padding: 20,
-    },
-    inputLabel: {
-        fontSize: 14,
         fontWeight: "600",
         color: "#374151",
         marginBottom: 8,
     },
-    textInput: {
-        borderWidth: 2,
-        borderColor: "#D1FAE5",
-        borderRadius: 8,
-        padding: 12,
-        fontSize: 16,
-        backgroundColor: "#F9FAFB",
-        color: "#111827",
-    },
-    modalFooter: {
-        flexDirection: "row",
-        justifyContent: "flex-end",
-        gap: 12,
-        padding: 20,
-        backgroundColor: "#F9FAFB",
-    },
-    cancelButton: {
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 8,
-        backgroundColor: "#E5E7EB",
-    },
-    cancelButtonText: {
+    emptySubtitle: {
+        fontSize: 14,
         color: "#6B7280",
-        fontWeight: "600",
-        fontSize: 16,
-    },
-    saveButton: {
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 8,
-        backgroundColor: "#22C55E",
-        shadowColor: "#22C55E",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    saveButtonText: {
-        color: "#FFFFFF",
-        fontWeight: "600",
-        fontSize: 16,
+        textAlign: "center",
     },
 });
