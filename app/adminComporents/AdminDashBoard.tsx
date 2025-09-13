@@ -1,267 +1,132 @@
 import React, { useState } from 'react';
 import {
-    Home,
-    Users,
-    Grid3X3,
-    ChefHat,
-    Plus,
-    Search,
-    Bell,
-    Settings,
-    Menu,
-    X,
-    TrendingUp,
-    Clock,
-    Star,
-    Eye
-} from 'lucide-react';
+    View,
+    Text,
+    TouchableOpacity,
+    ScrollView,
+    SafeAreaView,
+    StyleSheet,
+    Modal,
+    Dimensions,
+} from 'react-native';
 import UsersList from "@/components/UsersList";
-import CategorysScreen from "@/app/Category";
-import {CategoryList, CategoryManagement, CategoryManagemt} from "@/components/CategoryList";
+import { CategoryManagement } from "@/components/CategoryList";
+
+const { width } = Dimensions.get('window');
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
-    const [sidebarVisible, setSidebarVisible] = useState(true);
+    const [sidebarVisible, setSidebarVisible] = useState(false);
 
     const sidebarItems = [
-        { id: 'dashboard', title: 'Dashboard', icon: Home },
-        { id: 'users', title: 'User Management', icon: Users },
-        { id: 'categories', title: 'Category Management', icon: Grid3X3 },
-        { id: 'recipes', title: 'Recipe Management', icon: ChefHat },
+        { id: 'dashboard', title: 'Dashboard', icon: '🏠' },
+        { id: 'users', title: 'Users', icon: '👥' },
+        { id: 'categories', title: 'Categories', icon: '📂' },
+        { id: 'recipes', title: 'Recipes', icon: '🍳' },
     ];
 
     const renderDashboard = () => (
-        <div className="p-6 space-y-6">
-            {/* Welcome Section */}
-            <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-2xl p-6 text-white">
-                <h1 className="text-3xl font-bold mb-2">Welcome back, Admin! 👋</h1>
-                <p className="text-green-100">Here's what's happening with your recipe platform today.</p>
-            </div>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            {/* Welcome Header */}
+            <View style={styles.welcomeCard}>
+                <Text style={styles.welcomeTitle}>Dashboard</Text>
+                <Text style={styles.welcomeSubtitle}>An overview of your application.</Text>
+            </View>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-blue-100 rounded-xl">
-                            <Users className="text-blue-600" size={24} />
-                        </div>
-                        <div className="text-green-500 text-sm font-medium flex items-center">
-                            <TrendingUp size={16} className="mr-1" />
-                            +12%
-                        </div>
-                    </div>
-                    <div className="text-2xl font-bold text-gray-800 mb-1">1,234</div>
-                    <div className="text-gray-600 text-sm">Total Users</div>
-                </div>
+            <View style={styles.statsContainer}>
+                <View style={styles.statsRow}>
+                    <View style={styles.statCard}>
+                        <Text style={styles.statLabel}>Total Users</Text>
+                        <Text style={styles.statValue}>120</Text>
+                    </View>
+                    <View style={styles.statCard}>
+                        <Text style={styles.statLabel}>Total Categories</Text>
+                        <Text style={styles.statValue}>15</Text>
+                    </View>
+                </View>
+                <View style={styles.statsRow}>
+                    <View style={styles.statCard}>
+                        <Text style={styles.statLabel}>Total Recipes</Text>
+                        <Text style={styles.statValue}>300</Text>
+                    </View>
+                    <View style={styles.statCard}>
+                        <Text style={styles.statLabel}>Active Today</Text>
+                        <Text style={styles.statValue}>45</Text>
+                    </View>
+                </View>
+            </View>
 
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-purple-100 rounded-xl">
-                            <Grid3X3 className="text-purple-600" size={24} />
-                        </div>
-                        <div className="text-green-500 text-sm font-medium flex items-center">
-                            <TrendingUp size={16} className="mr-1" />
-                            +5%
-                        </div>
-                    </div>
-                    <div className="text-2xl font-bold text-gray-800 mb-1">56</div>
-                    <div className="text-gray-600 text-sm">Categories</div>
-                </div>
+            {/* Recent Activity */}
+            <View style={styles.activityCard}>
+                <Text style={styles.sectionTitle}>Recent Activity</Text>
 
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-orange-100 rounded-xl">
-                            <ChefHat className="text-orange-600" size={24} />
-                        </div>
-                        <div className="text-green-500 text-sm font-medium flex items-center">
-                            <TrendingUp size={16} className="mr-1" />
-                            +18%
-                        </div>
-                    </div>
-                    <div className="text-2xl font-bold text-gray-800 mb-1">2,890</div>
-                    <div className="text-gray-600 text-sm">Total Recipes</div>
-                </div>
+                {/* Activity Table Header */}
+                <View style={styles.activityHeader}>
+                    <Text style={[styles.activityHeaderText, { flex: 1.2 }]}>USER</Text>
+                    <Text style={[styles.activityHeaderText, { flex: 1.5 }]}>ACTION</Text>
+                    <Text style={[styles.activityHeaderText, { flex: 1 }]}>TIMESTAMP</Text>
+                </View>
 
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-green-100 rounded-xl">
-                            <Plus className="text-green-600" size={24} />
-                        </div>
-                        <div className="text-green-500 text-sm font-medium flex items-center">
-                            <TrendingUp size={16} className="mr-1" />
-                            +25%
-                        </div>
-                    </div>
-                    <div className="text-2xl font-bold text-gray-800 mb-1">145</div>
-                    <div className="text-gray-600 text-sm">New Today</div>
-                </div>
-            </div>
+                {/* Activity Rows */}
+                <View style={styles.activityRow}>
+                    <Text style={[styles.activityCell, { flex: 1.2 }]} numberOfLines={1}>Sophia Clark</Text>
+                    <Text style={[styles.activityCellAction, { flex: 1.5 }]} numberOfLines={1}>Created new recipe: Summer Salad</Text>
+                    <Text style={[styles.activityCellTime, { flex: 1 }]} numberOfLines={1}>10:30 AM</Text>
+                </View>
 
-            {/* Charts and Activities Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Recent Activities */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold text-gray-800">Recent Activities</h2>
-                        <Clock className="text-gray-400" size={20} />
-                    </div>
-                    <div className="space-y-4">
-                        <div className="flex items-start space-x-4 p-4 bg-blue-50 rounded-xl">
-                            <div className="p-2 bg-blue-100 rounded-lg">
-                                <ChefHat className="text-blue-600" size={16} />
-                            </div>
-                            <div className="flex-1">
-                                <div className="text-sm font-medium text-gray-800">New recipe "Chicken Curry" added</div>
-                                <div className="text-xs text-gray-500 mt-1">by John • 2 hours ago</div>
-                            </div>
-                        </div>
+                <View style={styles.activityRow}>
+                    <Text style={[styles.activityCell, { flex: 1.2 }]} numberOfLines={1}>Ethan Bennett</Text>
+                    <Text style={[styles.activityCellAction, { flex: 1.5 }]} numberOfLines={1}>Updated category: Desserts</Text>
+                    <Text style={[styles.activityCellTime, { flex: 1 }]} numberOfLines={1}>04:15 PM</Text>
+                </View>
 
-                        <div className="flex items-start space-x-4 p-4 bg-purple-50 rounded-xl">
-                            <div className="p-2 bg-purple-100 rounded-lg">
-                                <Grid3X3 className="text-purple-600" size={16} />
-                            </div>
-                            <div className="flex-1">
-                                <div className="text-sm font-medium text-gray-800">Category "Desserts" updated</div>
-                                <div className="text-xs text-gray-500 mt-1">4 hours ago</div>
-                            </div>
-                        </div>
+                <View style={styles.activityRow}>
+                    <Text style={[styles.activityCell, { flex: 1.2 }]} numberOfLines={1}>Olivia Carter</Text>
+                    <Text style={[styles.activityCellAction, { flex: 1.5 }]} numberOfLines={1}>Added new user: Liam Harper</Text>
+                    <Text style={[styles.activityCellTime, { flex: 1 }]} numberOfLines={1}>09:00 AM</Text>
+                </View>
 
-                        <div className="flex items-start space-x-4 p-4 bg-green-50 rounded-xl">
-                            <div className="p-2 bg-green-100 rounded-lg">
-                                <Users className="text-green-600" size={16} />
-                            </div>
-                            <div className="flex-1">
-                                <div className="text-sm font-medium text-gray-800">New user registration: Sarah</div>
-                                <div className="text-xs text-gray-500 mt-1">6 hours ago</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <View style={styles.activityRow}>
+                    <Text style={[styles.activityCell, { flex: 1.2 }]} numberOfLines={1}>Noah Foster</Text>
+                    <Text style={[styles.activityCellAction, { flex: 1.5 }]} numberOfLines={1}>Deleted recipe: Spicy Curry</Text>
+                    <Text style={[styles.activityCellTime, { flex: 1 }]} numberOfLines={1}>02:45 PM</Text>
+                </View>
 
-                {/* Top Recipes */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-bold text-gray-800">Top Recipes</h2>
-                        <Star className="text-gray-400" size={20} />
-                    </div>
-                    <div className="space-y-4">
-                        {['Chicken Biriyani', 'Chocolate Cake', 'Fish Curry', 'Kottu Roti'].map((recipe, index) => (
-                            <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                                <div className="flex items-center space-x-3">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                                        {index + 1}
-                                    </div>
-                                    <div>
-                                        <div className="font-medium text-gray-800">{recipe}</div>
-                                        <div className="text-xs text-gray-500 flex items-center">
-                                            <Eye size={12} className="mr-1" />
-                                            {(Math.random() * 1000 + 500).toFixed(0)} views
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center text-yellow-500">
-                                    <Star size={16} fill="currentColor" />
-                                    <span className="text-sm text-gray-600 ml-1">
-                                        {(Math.random() * 2 + 3).toFixed(1)}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </div>
+                <View style={[styles.activityRow, { borderBottomWidth: 0 }]}>
+                    <Text style={[styles.activityCell, { flex: 1.2 }]} numberOfLines={1}>Ava Mitchell</Text>
+                    <Text style={[styles.activityCellAction, { flex: 1.5 }]} numberOfLines={1}>Modified category: Appetizers</Text>
+                    <Text style={[styles.activityCellTime, { flex: 1 }]} numberOfLines={1}>11:20 AM</Text>
+                </View>
+            </View>
+        </ScrollView>
     );
 
     const renderUserManagement = () => (
-        <div className="p-6">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 text-white mb-6">
-                <h1 className="text-2xl font-bold mb-2">User Management</h1>
-                <p className="text-blue-100">Manage and monitor all users on your platform</p>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 ">
-                <div className="text-center py-4">
-                    <UsersList />
-
-                </div>
-            </div>
-        </div>
+        <View style={styles.content}>
+            <UsersList />
+        </View>
     );
 
     const renderCategoryManagement = () => (
-        <div className="p-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 ">
-                <div className="text-center py-4">
-                    <CategoryManagement />
-
-                </div>
-            </div>
-        </div>
+        <View style={styles.content}>
+            <CategoryManagement />
+        </View>
     );
 
     const renderRecipeManagement = () => (
-        <div className="p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <div className="bg-gradient-to-r from-orange-600 to-orange-700 rounded-2xl p-6 text-white flex-1 mr-0 sm:mr-4">
-                    <h1 className="text-2xl font-bold mb-2">Recipe Management</h1>
-                    <p className="text-orange-100">Create and manage delicious recipes</p>
-                </div>
-                <button className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:from-green-700 hover:to-green-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                    <Plus size={20} />
-                    Add Recipe
-                </button>
-            </div>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            <View style={styles.welcomeCard}>
+                <Text style={styles.welcomeTitle}>Recipe Management</Text>
+                <Text style={styles.welcomeSubtitle}>Create and manage delicious recipes</Text>
+            </View>
 
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                        <Search size={20} className="text-green-600" />
-                    </div>
-                    <input
-                        type="text"
-                        placeholder="Search recipes..."
-                        className="flex-1 outline-none text-gray-700 bg-transparent"
-                    />
-                </div>
-            </div>
-
-            <div className="space-y-4">
-                {['Chicken Curry', 'Chocolate Cake', 'Caesar Salad', 'Tomato Soup', 'Grilled Fish'].map((recipe, index) => (
-                    <div key={index} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                            <div className="flex items-center space-x-4 flex-1">
-                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                    ['bg-red-100', 'bg-yellow-100', 'bg-green-100', 'bg-blue-100', 'bg-purple-100'][index]
-                                }`}>
-                                    <ChefHat className={`${
-                                        ['text-red-600', 'text-yellow-600', 'text-green-600', 'text-blue-600', 'text-purple-600'][index]
-                                    }`} size={20} />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-gray-800 mb-1">{recipe}</h3>
-                                    <p className="text-gray-600 text-sm mb-1">
-                                        Category: {['Main Course', 'Dessert', 'Salad', 'Soup', 'Main Course'][index]}
-                                    </p>
-                                    <p className="text-gray-600 text-sm">Added by: Chef {index + 1}</p>
-                                </div>
-                            </div>
-                            <div className="flex gap-2">
-                                <button className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors">
-                                    View
-                                </button>
-                                <button className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600 transition-colors">
-                                    Edit
-                                </button>
-                                <button className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition-colors">
-                                    Delete
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
+            <View style={styles.emptyState}>
+                <Text style={styles.emptyIcon}>🍳</Text>
+                <Text style={styles.emptyTitle}>Recipe Management</Text>
+                <Text style={styles.emptySubtitle}>Recipe management features will be added soon</Text>
+            </View>
+        </ScrollView>
     );
 
     const renderContent = () => {
@@ -280,96 +145,419 @@ const AdminDashboard = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <SafeAreaView style={styles.container}>
             {/* Header */}
-            <div className="bg-gradient-to-r from-green-600 to-green-700 text-white h-16 flex items-center px-6 shadow-xl">
-                <button
-                    onClick={() => setSidebarVisible(!sidebarVisible)}
-                    className="mr-4 p-2 hover:bg-green-800 rounded-xl transition-colors"
+            <View style={styles.header}>
+                <TouchableOpacity
+                    style={styles.menuButton}
+                    onPress={() => setSidebarVisible(!sidebarVisible)}
                 >
-                    {sidebarVisible ? <X size={24} /> : <Menu size={24} />}
-                </button>
-                <h1 className="text-xl font-bold flex-1">Recipe Admin Dashboard</h1>
-                <div className="flex items-center gap-2">
-                    <button className="p-2 hover:bg-green-800 rounded-xl transition-colors relative">
-                        <Bell size={20} />
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
-                    </button>
-                    <button className="p-2 hover:bg-green-800 rounded-xl transition-colors">
-                        <Settings size={20} />
-                    </button>
-                </div>
-            </div>
+                    <Text style={styles.menuIcon}>☰</Text>
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Recipe Admin</Text>
+                <View style={styles.headerActions}>
+                    <TouchableOpacity style={styles.headerButton}>
+                        <Text style={styles.headerButtonText}>🔔</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
 
-            <div className="flex">
-                {/* Sidebar */}
-                {sidebarVisible && (
-                    <div className="w-64 bg-white shadow-xl min-h-screen">
-                        {/* Profile Section */}
-                        <div className="p-6 border-b border-gray-100 bg-gradient-to-br from-green-50 to-green-100">
-                            <div className="text-center">
-                                {/* Profile Picture */}
-                                <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-green-600 to-green-700 flex items-center justify-center shadow-lg">
-                                    <ChefHat size={24} className="text-white" />
-                                </div>
-                                <h2 className="font-bold text-gray-800 text-lg">Admin Chef</h2>
-                                <p className="text-sm text-gray-600">Super Administrator</p>
-                                <div className="flex justify-center mt-2">
-                                    <div className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
-                                        Online
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+            <View style={styles.mainContainer}>
+                {/* Sidebar Modal */}
+                <Modal
+                    visible={sidebarVisible}
+                    transparent
+                    animationType="slide"
+                    onRequestClose={() => setSidebarVisible(false)}
+                >
+                    <View style={styles.sidebarOverlay}>
+                        <View style={styles.sidebar}>
+                            {/* Profile Section */}
+                            <View style={styles.profileSection}>
+                                <View style={styles.profileAvatar}>
+                                    <Text style={styles.profileAvatarText}>AC</Text>
+                                </View>
+                                <Text style={styles.profileName}>Admin Chef</Text>
+                                <Text style={styles.profileRole}>Super Administrator</Text>
+                                <View style={styles.onlineBadge}>
+                                    <Text style={styles.onlineBadgeText}>Online</Text>
+                                </View>
+                            </View>
 
-                        <nav className="p-4">
-                            {sidebarItems.map((item) => {
-                                const IconComponent = item.icon;
-                                return (
-                                    <button
+                            {/* Navigation */}
+                            <View style={styles.navigation}>
+                                {sidebarItems.map((item) => (
+                                    <TouchableOpacity
                                         key={item.id}
-                                        onClick={() => setActiveTab(item.id)}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all duration-300 ${
-                                            activeTab === item.id
-                                                ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg transform scale-105'
-                                                : 'text-gray-700 hover:bg-green-50 hover:text-green-600 hover:transform hover:scale-105'
-                                        }`}
+                                        style={[
+                                            styles.navItem,
+                                            activeTab === item.id && styles.navItemActive
+                                        ]}
+                                        onPress={() => {
+                                            setActiveTab(item.id);
+                                            setSidebarVisible(false);
+                                        }}
                                     >
-                                        <IconComponent size={20} />
-                                        <span className="font-medium">{item.title}</span>
-                                    </button>
-                                );
-                            })}
-                        </nav>
+                                        <Text style={styles.navIcon}>{item.icon}</Text>
+                                        <Text style={[
+                                            styles.navText,
+                                            activeTab === item.id && styles.navTextActive
+                                        ]}>
+                                            {item.title}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
 
-                        {/* Quick Stats in Sidebar */}
-                        <div className="p-4 border-t border-gray-100 bg-gray-50">
-                            <h3 className="text-sm font-semibold text-gray-600 mb-3">Quick Stats</h3>
-                            <div className="space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Today's Views</span>
-                                    <span className="font-semibold text-green-600">2.4K</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Active Users</span>
-                                    <span className="font-semibold text-blue-600">156</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">New Recipes</span>
-                                    <span className="font-semibold text-purple-600">12</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                            {/* Exit Button */}
+                            <View style={styles.exitSection}>
+                                <TouchableOpacity style={styles.exitButton}>
+                                    <Text style={styles.exitIcon}>🚪</Text>
+                                    <Text style={styles.exitText}>Exit</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        {/* Overlay to close sidebar */}
+                        <TouchableOpacity
+                            style={styles.sidebarBackground}
+                            onPress={() => setSidebarVisible(false)}
+                        />
+                    </View>
+                </Modal>
 
                 {/* Main Content */}
-                <div className="flex-1 overflow-auto">
+                <View style={styles.contentContainer}>
                     {renderContent()}
-                </div>
-            </div>
-        </div>
+                </View>
+            </View>
+        </SafeAreaView>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#F8FAFC',
+    },
+
+    // Header
+    header: {
+        backgroundColor: '#FFFFFF',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E2E8F0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 3,
+        elevation: 2,
+    },
+    menuButton: {
+        padding: 8,
+        borderRadius: 8,
+        backgroundColor: '#F1F5F9',
+    },
+    menuIcon: {
+        fontSize: 18,
+        color: '#64748B',
+    },
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#1E293B',
+        flex: 1,
+        marginLeft: 16,
+    },
+    headerActions: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    headerButton: {
+        padding: 8,
+        borderRadius: 8,
+        backgroundColor: '#F1F5F9',
+    },
+    headerButtonText: {
+        fontSize: 16,
+    },
+
+    // Main Container
+    mainContainer: {
+        flex: 1,
+    },
+    contentContainer: {
+        flex: 1,
+    },
+
+    // Content
+    content: {
+        flex: 1,
+        padding: 20,
+    },
+
+    // Welcome Card
+    welcomeCard: {
+        backgroundColor: '#FFFFFF',
+        padding: 24,
+        borderRadius: 12,
+        marginBottom: 24,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+    },
+    welcomeTitle: {
+        fontSize: 28,
+        fontWeight: '700',
+        color: '#1E293B',
+        marginBottom: 8,
+    },
+    welcomeSubtitle: {
+        fontSize: 16,
+        color: '#64748B',
+        fontWeight: '400',
+    },
+
+    // Stats
+    statsContainer: {
+        marginBottom: 24,
+    },
+    statsRow: {
+        flexDirection: 'row',
+        gap: 16,
+        marginBottom: 16,
+    },
+    statCard: {
+        flex: 1,
+        backgroundColor: '#FFFFFF',
+        padding: 20,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 3,
+        elevation: 1,
+    },
+    statLabel: {
+        fontSize: 14,
+        color: '#64748B',
+        marginBottom: 8,
+        fontWeight: '500',
+    },
+    statValue: {
+        fontSize: 32,
+        fontWeight: '700',
+        color: '#1E293B',
+    },
+
+    // Activity Card
+    activityCard: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+        overflow: 'hidden',
+        marginBottom: 20,
+    },
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#1E293B',
+        padding: 20,
+        paddingBottom: 16,
+    },
+
+    // Activity Table
+    activityHeader: {
+        flexDirection: 'row',
+        backgroundColor: '#F8FAFC',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E2E8F0',
+    },
+    activityHeaderText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#64748B',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    activityRow: {
+        flexDirection: 'row',
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F1F5F9',
+        alignItems: 'flex-start',
+    },
+    activityCell: {
+        fontSize: 14,
+        color: '#1E293B',
+        fontWeight: '600',
+        marginRight: 12,
+    },
+    activityCellAction: {
+        fontSize: 14,
+        color: '#64748B',
+        marginRight: 12,
+        lineHeight: 20,
+    },
+    activityCellTime: {
+        fontSize: 12,
+        color: '#94A3B8',
+        textAlign: 'right',
+    },
+
+    // Sidebar
+    sidebarOverlay: {
+        flex: 1,
+        flexDirection: 'row',
+    },
+    sidebar: {
+        width: 280,
+        backgroundColor: '#FFFFFF',
+        shadowColor: '#000',
+        shadowOffset: { width: 2, height: 0 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    sidebarBackground: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+
+    // Profile Section
+    profileSection: {
+        padding: 24,
+        alignItems: 'center',
+        borderBottomWidth: 1,
+        borderBottomColor: '#E2E8F0',
+        backgroundColor: '#F8FAFC',
+    },
+    profileAvatar: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: '#3B82F6',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 12,
+    },
+    profileAvatarText: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#FFFFFF',
+    },
+    profileName: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#1E293B',
+        marginBottom: 4,
+    },
+    profileRole: {
+        fontSize: 14,
+        color: '#64748B',
+        marginBottom: 8,
+    },
+    onlineBadge: {
+        backgroundColor: '#10B981',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    onlineBadgeText: {
+        fontSize: 12,
+        color: '#FFFFFF',
+        fontWeight: '600',
+    },
+
+    // Navigation
+    navigation: {
+        padding: 20,
+        flex: 1,
+    },
+    navItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        marginBottom: 8,
+    },
+    navItemActive: {
+        backgroundColor: '#3B82F6',
+    },
+    navIcon: {
+        fontSize: 18,
+        marginRight: 12,
+        width: 24,
+        textAlign: 'center',
+    },
+    navText: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#64748B',
+    },
+    navTextActive: {
+        color: '#FFFFFF',
+        fontWeight: '600',
+    },
+
+    // Exit Section
+    exitSection: {
+        padding: 20,
+        borderTopWidth: 1,
+        borderTopColor: '#E2E8F0',
+    },
+    exitButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        backgroundColor: '#FEF2F2',
+    },
+    exitIcon: {
+        fontSize: 18,
+        marginRight: 12,
+    },
+    exitText: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#DC2626',
+    },
+
+    // Empty State
+    emptyState: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 60,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+    },
+    emptyIcon: {
+        fontSize: 48,
+        marginBottom: 16,
+    },
+    emptyTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#374151',
+        marginBottom: 8,
+    },
+    emptySubtitle: {
+        fontSize: 14,
+        color: '#6B7280',
+        textAlign: 'center',
+    },
+});
 
 export default AdminDashboard;

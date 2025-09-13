@@ -1,6 +1,15 @@
 import { db } from "@/config/firebaseConfig";
 import { Category } from "@/types/Category";
-import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
+import {
+    addDoc,
+    collection,
+    deleteDoc,
+    doc,
+    onSnapshot,
+    orderBy,
+    query,
+    updateDoc,
+} from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
     Alert,
@@ -12,6 +21,7 @@ import {
     StyleSheet,
     ActivityIndicator,
     SafeAreaView,
+    ScrollView,
 } from "react-native";
 
 export const CategoryManagement = () => {
@@ -21,18 +31,19 @@ export const CategoryManagement = () => {
     const [categoryName, setCategoryName] = useState("");
     const [categoryDescription, setCategoryDescription] = useState("");
 
-
     // Fetch categories
     useEffect(() => {
-        const q = collection(db, "categories");
+        const q = query(collection(db, "categories"), orderBy("name"));
+
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const list: Category[] = snapshot.docs.map((doc) => ({
-                cid: doc.id,
-                ...(doc.data() as any),
-            }));
-            setCategories(list);
+            const categoriesList = snapshot.docs.map(doc => ({
+                cid: doc.id, // Firestore document ID
+                ...doc.data()
+            })) as Category[];
+            setCategories(categoriesList);
             setLoading(false);
         });
+
         return () => unsubscribe();
     }, []);
 
@@ -42,27 +53,30 @@ export const CategoryManagement = () => {
             Alert.alert("Error", "Category name is required");
             return;
         }
-
         try {
             if (selectedCategory) {
                 // Update
-                const catRef = doc(db, "categories", selectedCategory.cid);
+                const catRef = doc(db, "categories", selectedCategory.cid!);
                 await updateDoc(catRef, {
                     name: categoryName.trim(),
                     description: categoryDescription.trim(),
+                    updatedAt: new Date(),
                 });
+                Alert.alert("Success", "Category updated successfully!");
             } else {
                 // Add
                 await addDoc(collection(db, "categories"), {
                     name: categoryName.trim(),
                     description: categoryDescription.trim(),
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
                 });
+                Alert.alert("Success", "Category added successfully!");
             }
 
             setSelectedCategory(null);
             setCategoryName("");
             setCategoryDescription("");
-            Alert.alert("Success", "Category saved successfully!");
         } catch (err) {
             console.error("Error saving category:", err);
             Alert.alert("Error", "Failed to save category");
@@ -70,23 +84,40 @@ export const CategoryManagement = () => {
     };
 
     // Delete Category with confirmation
-    const confirmDelete = (cid: string, name: string) => {
-        Alert.alert("Delete Category", `Are you sure you want to delete "${name}"?`, [
-            { text: "Cancel", style: "cancel" },
-            { text: "Delete", style: "destructive", onPress: () => handleDelete(cid) },
-        ]);
+    const confirmDelete = (category: Category) => {
+        if (!category.cid) {
+            Alert.alert("Error", "Category ID is missing");
+            return;
+        }
+        Alert.alert(
+            "Delete Category",
+            `Are you sure you want to delete "${category.name}"?`,
+            [
+                { text: "Cancel", style: "cancel" },
+                { text: "Yes", onPress: () => handleDelete(category) },
+            ]
+        );
     };
 
-    const handleDelete = (item: Category) => {
-        if (!categories) return;  // guard
-        const index = categories.indexOf(item);
-        if (index !== -1) {
-            const updated = [...categories];
-            updated.splice(index, 1);
-            setCategories(updated);
+    const handleDelete = async (category: Category) => {
+        try {
+            if (!category.cid) throw new Error("Category ID is undefined");
+
+            const catRef = doc(db, "categories", category.cid);
+            await deleteDoc(catRef);
+
+            if (selectedCategory && selectedCategory.cid === category.cid) {
+                setSelectedCategory(null);
+                setCategoryName("");
+                setCategoryDescription("");
+            }
+
+            Alert.alert("Success", "Category deleted successfully!");
+        } catch (err) {
+            console.error("Error deleting category:", err);
+            Alert.alert("Error", "Failed to delete category");
         }
     };
-
 
     const openEditModal = (category: Category | null = null) => {
         if (category) {
@@ -117,18 +148,18 @@ export const CategoryManagement = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.content}>
-                {/* Main Header */}
+            <ScrollView style={styles.content}>
                 <View style={styles.mainHeader}>
                     <View>
                         <Text style={styles.mainTitle}>Category Management</Text>
-                        <Text style={styles.mainSubtitle}>Add, edit, and manage your categories.</Text>
+                        <Text style={styles.mainSubtitle}>
+                            Add, edit, and manage your categories.
+                        </Text>
                     </View>
-
                 </View>
 
                 <View style={styles.mainContent}>
-                    {/* Left Side - Add Form */}
+                    {/* Left Panel - Add/Edit Form */}
                     <View style={styles.leftPanel}>
                         <View style={styles.formCard}>
                             <Text style={styles.formTitle}>
@@ -156,9 +187,9 @@ export const CategoryManagement = () => {
                                 <TextInput
                                     value={categoryDescription}
                                     onChangeText={setCategoryDescription}
-                                    placeholder="A brief description of what this category is for."
+                                    placeholder="A brief description of this category."
                                     style={[styles.input, styles.textArea]}
-                                    multiline={true}
+                                    multiline
                                     numberOfLines={4}
                                     placeholderTextColor="#9CA3AF"
                                 />
@@ -186,78 +217,81 @@ export const CategoryManagement = () => {
                         </View>
                     </View>
 
-                    {/* Right Side - Categories Table */}
+                    {/* Right Panel - Categories List */}
                     <View style={styles.rightPanel}>
                         <View style={styles.tableCard}>
-                            {/* Table */}
+                            <View style={styles.tableHeaderRow}>
+                                <Text style={[styles.tableHeaderText, { flex: 2 }]}>
+                                    CATEGORY NAME
+                                </Text>
+                                <Text style={[styles.tableHeaderText, { flex: 3 }]}>
+                                    DESCRIPTION
+                                </Text>
+                                <Text
+                                    style={[styles.tableHeaderText, { flex: 1, textAlign: "right" }]}
+                                >
+                                    ACTIONS
+                                </Text>
+                            </View>
+
                             {categories.length === 0 ? (
                                 <View style={styles.emptyState}>
                                     <Text style={styles.emptyIcon}>📂</Text>
                                     <Text style={styles.emptyTitle}>No categories yet</Text>
-                                    <Text style={styles.emptySubtitle}>Create your first category to get started</Text>
+                                    <Text style={styles.emptySubtitle}>
+                                        Create your first category to get started
+                                    </Text>
                                 </View>
                             ) : (
-                                <View style={styles.table}>
-                                    {/* Table Headers */}
-                                    <View style={styles.tableHeaderRow}>
-                                        <Text style={[styles.tableHeaderText, { flex: 2 }]}>CATEGORY NAME</Text>
-                                        <Text style={[styles.tableHeaderText, { flex: 3 }]}>DESCRIPTION</Text>
-                                        <Text style={[styles.tableHeaderText, { flex: 1, textAlign: 'right' }]}>
-                                            ACTIONS
-                                        </Text>
-                                    </View>
-
-                                    {/* Table Rows */}
-                                    <FlatList
-                                        data={categories}
-                                        keyExtractor={(item) => item.cid}
-                                        renderItem={({ item, index }) => (
-                                            <View
-                                                style={[
-                                                    styles.tableRow,
-                                                    index === categories.length - 1 && styles.lastRow,
-                                                ]}
+                                <FlatList
+                                    data={categories}
+                                    keyExtractor={(item) => item.cid!}
+                                    scrollEnabled={false}
+                                    renderItem={({ item, index }) => (
+                                        <View
+                                            style={[
+                                                styles.tableRow,
+                                                index === categories.length - 1 && styles.lastRow,
+                                            ]}
+                                        >
+                                            <Text
+                                                style={[styles.tableCellName, { flex: 2 }]}
+                                                numberOfLines={1}
                                             >
-                                                <Text
-                                                    style={[styles.tableCellName, { flex: 2 }]}
-                                                    numberOfLines={1}
+                                                {item.name}
+                                            </Text>
+                                            <Text
+                                                style={[styles.tableCellDescription, { flex: 3 }]}
+                                                numberOfLines={2}
+                                            >
+                                                {item.description || "No description provided."}
+                                            </Text>
+                                            <View style={[styles.actionsCell, { flex: 1 }]}>
+                                                <TouchableOpacity
+                                                    style={styles.editLink}
+                                                    onPress={() => openEditModal(item)}
+                                                    activeOpacity={0.7}
                                                 >
-                                                    {item.name}
-                                                </Text>
-                                                <Text
-                                                    style={[styles.tableCellDescription, { flex: 3 }]}
-                                                    numberOfLines={2}
+                                                    <Text style={styles.editLinkText}>Edit</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
+                                                    style={styles.editLink}
+                                                    onPress={() => confirmDelete(item)}
+                                                    activeOpacity={0.7}
                                                 >
-                                                    {item.description || "No description provided."}
-                                                </Text>
-                                                <View style={[styles.actionsCell, { flex: 1 }]}>
-                                                    <TouchableOpacity
-                                                        style={styles.editLink}
-                                                        onPress={() => openEditModal(item)}
-                                                        activeOpacity={0.7}
-                                                    >
-                                                        <Text style={styles.editLinkText}>Edit</Text>
-                                                    </TouchableOpacity>
-                                                    <TouchableOpacity
-                                                        style={styles.editLink}
-                                                        onPress={() => confirmDelete(item.cid, item.name)}
-                                                        activeOpacity={0.7}
-                                                    >
-                                                        <Text style={[styles.editLinkText, { color: "red" }]}>
-                                                            Delete
-                                                        </Text>
-                                                    </TouchableOpacity>
-                                                </View>
+                                                    <Text style={[styles.editLinkText, styles.deleteText]}>
+                                                        Delete
+                                                    </Text>
+                                                </TouchableOpacity>
                                             </View>
-                                        )}
-                                        showsVerticalScrollIndicator={false}
-                                    />
-                                </View>
+                                        </View>
+                                    )}
+                                />
                             )}
                         </View>
                     </View>
                 </View>
-            </View>
+            </ScrollView>
         </SafeAreaView>
     );
 };
@@ -271,8 +305,6 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 24,
     },
-
-    // Loading
     loadingContainer: {
         flex: 1,
         justifyContent: "center",
@@ -283,8 +315,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "#6B7280",
     },
-
-    // Main Header
     mainHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
@@ -302,39 +332,10 @@ const styles = StyleSheet.create({
         color: "#6B7280",
         fontWeight: "400",
     },
-    addButton: {
-        backgroundColor: "#2563EB",
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        borderRadius: 8,
-        shadowColor: "#2563EB",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
-    },
-    addButtonIcon: {
-        fontSize: 16,
-        color: "#FFFFFF",
-        fontWeight: "600",
-        marginRight: 8,
-    },
-    addButtonText: {
-        color: "#FFFFFF",
-        fontSize: 14,
-        fontWeight: "600",
-    },
-
-    // Main Content Layout
     mainContent: {
-        flex: 1,
         flexDirection: "row",
         gap: 24,
     },
-
-    // Left Panel - Form
     leftPanel: {
         flex: 1,
         maxWidth: 400,
@@ -412,8 +413,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: "500",
     },
-
-    // Right Panel - Table
     rightPanel: {
         flex: 2,
     },
@@ -428,11 +427,6 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
         elevation: 1,
         overflow: "hidden",
-    },
-
-    // Table
-    table: {
-        flex: 1,
     },
     tableHeaderRow: {
         flexDirection: "row",
@@ -484,8 +478,9 @@ const styles = StyleSheet.create({
         color: "#2563EB",
         fontWeight: "500",
     },
-
-    // Empty State
+    deleteText: {
+        color: "#EF4444",
+    },
     emptyState: {
         alignItems: "center",
         justifyContent: "center",

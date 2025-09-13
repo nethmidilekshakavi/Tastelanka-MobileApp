@@ -185,9 +185,6 @@ const UsersList = () => {
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.title}>User Management</Text>
-                    <TouchableOpacity style={styles.addButton}>
-                        <Text style={styles.addButtonText}>+</Text>
-                    </TouchableOpacity>
                 </View>
 
                 {/* Search and Filter Bar */}
