@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import UsersList from "@/components/UsersList";
 import { CategoryManagement } from "@/components/CategoryList";
+import {RecipeManagement} from "@/components/RecipeList";
 
 const { width } = Dimensions.get('window');
 
@@ -115,18 +116,9 @@ const AdminDashboard = () => {
     );
 
     const renderRecipeManagement = () => (
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            <View style={styles.welcomeCard}>
-                <Text style={styles.welcomeTitle}>Recipe Management</Text>
-                <Text style={styles.welcomeSubtitle}>Create and manage delicious recipes</Text>
-            </View>
-
-            <View style={styles.emptyState}>
-                <Text style={styles.emptyIcon}>🍳</Text>
-                <Text style={styles.emptyTitle}>Recipe Management</Text>
-                <Text style={styles.emptySubtitle}>Recipe management features will be added soon</Text>
-            </View>
-        </ScrollView>
+        <View style={styles.content}>
+            <RecipeManagement />
+        </View>
     );
 
     const renderContent = () => {

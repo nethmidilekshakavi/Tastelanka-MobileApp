@@ -26,7 +26,6 @@ import {
     getDoc,
     deleteDoc,
 } from "firebase/firestore";
-import { httpsCallable } from "firebase/functions";
 
 type UserDoc = {
     uid: string;
