@@ -14,6 +14,7 @@ import {
     ScrollView,
     Image,
     Modal,
+    Dimensions,
 } from "react-native";
 import { Recipe } from "@/types/Recipe";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -23,13 +24,18 @@ import {Category} from "@/types/Category";
 const ASSET_IMAGES = [
     { id: 1, name: "Rice & Curry", source: require("../assets/images/fac132dbf73ecd95071f6da669ce7f15.jpg") },
     { id: 2, name: "Kottu", source: require("../assets/images/afa40a8a807f868115dc42478d05f8b0.jpg") },
-  ]
+];
+
+const { width: screenWidth } = Dimensions.get('window');
+const cardWidth = (screenWidth - 80) / 5; // 5 cards per row with margins
 
 export const RecipeManagement = () => {
     const [recipes, setRecipes] = useState<Recipe[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
     const [showForm, setShowForm] = useState(false);
+    const [showDetailModal, setShowDetailModal] = useState(false);
+    const [detailRecipe, setDetailRecipe] = useState<Recipe | null>(null);
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [ingredients, setIngredients] = useState("");
@@ -42,7 +48,6 @@ export const RecipeManagement = () => {
     // Fetch categories
     useEffect(() => {
         const q = query(collection(db, "categories"), orderBy("name"));
-
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const categoriesList = snapshot.docs.map(doc => ({
                 cid: doc.id,
@@ -51,10 +56,8 @@ export const RecipeManagement = () => {
             setCategories(categoriesList);
             setLoading(false);
         });
-
         return () => unsubscribe();
     }, []);
-
 
     // Fetch recipes
     useEffect(() => {
@@ -132,6 +135,7 @@ export const RecipeManagement = () => {
             if (!recipe.rid) throw new Error("Recipe ID is undefined");
             await deleteDoc(doc(db, "recipes", recipe.rid));
             if (selectedRecipe?.rid === recipe.rid) cancelEdit();
+            setShowDetailModal(false);
             Alert.alert("Success", "Recipe deleted successfully!");
         } catch (err) {
             console.error("Error deleting recipe:", err);
@@ -153,7 +157,13 @@ export const RecipeManagement = () => {
         setInstructions(recipe.instructions || "");
         setSelectedImageId(recipe.imageId || null);
         setCategory(recipe.category || "");
+        setShowDetailModal(false);
         setShowForm(true);
+    };
+
+    const openDetailView = (recipe: Recipe) => {
+        setDetailRecipe(recipe);
+        setShowDetailModal(true);
     };
 
     const clearForm = () => {
@@ -180,6 +190,11 @@ export const RecipeManagement = () => {
         if (!recipe.imageId) return null;
         const image = ASSET_IMAGES.find(img => img.id === recipe.imageId);
         return image ? image.source : null;
+    };
+
+    const truncateText = (text: string, maxLength: number = 50) => {
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + "...";
     };
 
     if (loading) {
@@ -210,22 +225,21 @@ export const RecipeManagement = () => {
                 <FlatList
                     data={recipes}
                     keyExtractor={(item) => item.rid!}
-                    numColumns={4}
+                    numColumns={5}
                     scrollEnabled={false}
                     contentContainerStyle={styles.recipesContainer}
-                    columnWrapperStyle={styles.recipeRow}
                     renderItem={({ item }) => (
-                        <TouchableOpacity
-                            style={styles.recipeCard}
-                            onPress={() => openEdit(item)}
-                            activeOpacity={0.7}
-                        >
-                            <View style={styles.imageContainer}>
+                        <View style={styles.recipeCard}>
+                            <TouchableOpacity
+                                style={styles.imageContainer}
+                                onPress={() => openDetailView(item)}
+                                activeOpacity={0.8}
+                            >
                                 {getRecipeImageSource(item) ? (
                                     <Image source={getRecipeImageSource(item)} style={styles.recipeImage} />
                                 ) : (
                                     <View style={styles.recipeImagePlaceholder}>
-                                        <Icon name="restaurant-menu" size={32} color="#9CA3AF" />
+                                        <Icon name="restaurant-menu" size={20} color="#9CA3AF" />
                                     </View>
                                 )}
                                 <View style={styles.imageOverlay}>
@@ -233,26 +247,35 @@ export const RecipeManagement = () => {
                                         style={styles.editIconButton}
                                         onPress={() => openEdit(item)}
                                     >
-                                        <Icon name="edit" size={16} color="#fff" />
+                                        <Icon name="edit" size={12} color="#fff" />
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={styles.deleteIconButton}
                                         onPress={() => confirmDelete(item)}
                                     >
-                                        <Icon name="delete" size={16} color="#fff" />
+                                        <Icon name="delete" size={12} color="#fff" />
                                     </TouchableOpacity>
                                 </View>
-                            </View>
+                            </TouchableOpacity>
 
                             <View style={styles.recipeInfo}>
-                                <Text style={styles.recipeTitle} numberOfLines={2}>
+                                <Text style={styles.recipeTitle} numberOfLines={1}>
                                     {item.title}
                                 </Text>
                                 <Text style={styles.recipeCategory} numberOfLines={1}>
                                     {item.category || "Uncategorized"}
                                 </Text>
+                                <Text style={styles.recipeDescription} numberOfLines={2}>
+                                    {item.description || "No description"}
+                                </Text>
+                                <TouchableOpacity
+                                    style={styles.seeMoreButton}
+                                    onPress={() => openDetailView(item)}
+                                >
+                                    <Text style={styles.seeMoreText}>See More</Text>
+                                </TouchableOpacity>
                             </View>
-                        </TouchableOpacity>
+                        </View>
                     )}
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
@@ -263,6 +286,87 @@ export const RecipeManagement = () => {
                     }
                 />
             </ScrollView>
+
+            {/* Recipe Detail Modal */}
+            <Modal
+                visible={showDetailModal}
+                animationType="slide"
+                presentationStyle="pageSheet"
+                onRequestClose={() => setShowDetailModal(false)}
+            >
+                <SafeAreaView style={styles.detailContainer}>
+                    <View style={styles.detailHeader}>
+                        <TouchableOpacity
+                            onPress={() => setShowDetailModal(false)}
+                            style={styles.closeButton}
+                        >
+                            <Icon name="close" size={24} color="#6B7280" />
+                        </TouchableOpacity>
+                        <Text style={styles.detailHeaderTitle}>Recipe Details</Text>
+                        <View style={styles.detailActions}>
+                            <TouchableOpacity
+                                style={styles.detailEditButton}
+                                onPress={() => detailRecipe && openEdit(detailRecipe)}
+                            >
+                                <Icon name="edit" size={20} color="#6366F1" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.detailDeleteButton}
+                                onPress={() => detailRecipe && confirmDelete(detailRecipe)}
+                            >
+                                <Icon name="delete" size={20} color="#EF4444" />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
+                    <ScrollView style={styles.detailContent} showsVerticalScrollIndicator={false}>
+                        {detailRecipe && (
+                            <>
+                                <View style={styles.detailImageSection}>
+                                    {getRecipeImageSource(detailRecipe) ? (
+                                        <Image
+                                            source={getRecipeImageSource(detailRecipe)}
+                                            style={styles.detailImage}
+                                        />
+                                    ) : (
+                                        <View style={styles.detailImagePlaceholder}>
+                                            <Icon name="restaurant-menu" size={60} color="#9CA3AF" />
+                                        </View>
+                                    )}
+                                </View>
+
+                                <View style={styles.detailInfoSection}>
+                                    <Text style={styles.detailTitle}>{detailRecipe.title}</Text>
+                                    <View style={styles.categoryBadge}>
+                                        <Text style={styles.categoryBadgeText}>{detailRecipe.category}</Text>
+                                    </View>
+
+                                    {detailRecipe.description && (
+                                        <View style={styles.detailSection}>
+                                            <Text style={styles.detailSectionTitle}>Description</Text>
+                                            <Text style={styles.detailSectionContent}>{detailRecipe.description}</Text>
+                                        </View>
+                                    )}
+
+                                    {detailRecipe.ingredients && (
+                                        <View style={styles.detailSection}>
+                                            <Text style={styles.detailSectionTitle}>Ingredients</Text>
+                                            <Text style={styles.detailSectionContent}>{detailRecipe.ingredients}</Text>
+                                        </View>
+                                    )}
+
+                                    {detailRecipe.instructions && (
+                                        <View style={styles.detailSection}>
+                                            <Text style={styles.detailSectionTitle}>Instructions</Text>
+                                            <Text style={styles.detailSectionContent}>{detailRecipe.instructions}</Text>
+                                        </View>
+                                    )}
+                                </View>
+                            </>
+                        )}
+                    </ScrollView>
+                </SafeAreaView>
+            </Modal>
 
             {/* Recipe Form Modal */}
             <Modal
@@ -482,26 +586,21 @@ const styles = StyleSheet.create({
     recipesContainer: {
         paddingBottom: 40,
     },
-    recipeRow: {
-        justifyContent: "space-between",
-        marginBottom: 16,
-    },
     recipeCard: {
-        width: 200,
-        height: 200,
+        width: cardWidth,
         backgroundColor: "#fff",
-        borderRadius: 16,
+        borderRadius: 12,
         overflow: "hidden",
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 3,
-        marginHorizontal: 4,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
+        margin: 8,
     },
     imageContainer: {
         position: "relative",
-        height: 120,
+        height: 100,
     },
     recipeImage: {
         width: "100%",
@@ -517,45 +616,59 @@ const styles = StyleSheet.create({
     },
     imageOverlay: {
         position: "absolute",
-        top: 8,
-        right: 8,
+        top: 4,
+        right: 4,
         flexDirection: "row",
-        gap: 6,
+        gap: 4,
     },
     editIconButton: {
         backgroundColor: "rgba(99, 102, 241, 0.9)",
-        width: 28,
-        height: 28,
-        borderRadius: 14,
+        width: 20,
+        height: 20,
+        borderRadius: 10,
         justifyContent: "center",
         alignItems: "center",
     },
     deleteIconButton: {
         backgroundColor: "rgba(239, 68, 68, 0.9)",
-        width: 28,
-        height: 28,
-        borderRadius: 14,
+        width: 20,
+        height: 20,
+        borderRadius: 10,
         justifyContent: "center",
         alignItems: "center",
     },
     recipeInfo: {
-        padding: 12,
-        flex: 1,
-        justifyContent: "center",
+        padding: 8,
     },
     recipeTitle: {
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: "700",
         color: "#1E293B",
-        textAlign: "center",
-        lineHeight: 18,
+        marginBottom: 2,
     },
     recipeCategory: {
-        fontSize: 12,
+        fontSize: 10,
         color: "#6366F1",
-        textAlign: "center",
-        marginTop: 4,
         fontWeight: "500",
+        marginBottom: 4,
+    },
+    recipeDescription: {
+        fontSize: 10,
+        color: "#64748B",
+        lineHeight: 12,
+        marginBottom: 6,
+    },
+    seeMoreButton: {
+        alignSelf: "flex-start",
+        paddingVertical: 2,
+        paddingHorizontal: 4,
+        backgroundColor: "#F1F5F9",
+        borderRadius: 4,
+    },
+    seeMoreText: {
+        fontSize: 9,
+        color: "#6366F1",
+        fontWeight: "600",
     },
     emptyContainer: {
         alignItems: "center",
@@ -576,7 +689,90 @@ const styles = StyleSheet.create({
         marginTop: 8,
         lineHeight: 20,
     },
-    // Modal Styles
+    // Detail Modal Styles
+    detailContainer: {
+        flex: 1,
+        backgroundColor: "#fff",
+    },
+    detailHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "#E2E8F0",
+    },
+    detailHeaderTitle: {
+        fontSize: 18,
+        fontWeight: "700",
+        color: "#1E293B",
+    },
+    detailActions: {
+        flexDirection: "row",
+        gap: 12,
+    },
+    detailEditButton: {
+        padding: 8,
+    },
+    detailDeleteButton: {
+        padding: 8,
+    },
+    detailContent: {
+        flex: 1,
+    },
+    detailImageSection: {
+        height: 250,
+        backgroundColor: "#F1F5F9",
+    },
+    detailImage: {
+        width: "100%",
+        height: "100%",
+        resizeMode: "cover",
+    },
+    detailImagePlaceholder: {
+        width: "100%",
+        height: "100%",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    detailInfoSection: {
+        padding: 20,
+    },
+    detailTitle: {
+        fontSize: 24,
+        fontWeight: "800",
+        color: "#1E293B",
+        marginBottom: 8,
+    },
+    categoryBadge: {
+        alignSelf: "flex-start",
+        backgroundColor: "#EEF2FF",
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 16,
+        marginBottom: 20,
+    },
+    categoryBadgeText: {
+        fontSize: 12,
+        color: "#6366F1",
+        fontWeight: "600",
+    },
+    detailSection: {
+        marginBottom: 24,
+    },
+    detailSectionTitle: {
+        fontSize: 18,
+        fontWeight: "700",
+        color: "#1E293B",
+        marginBottom: 8,
+    },
+    detailSectionContent: {
+        fontSize: 16,
+        color: "#64748B",
+        lineHeight: 24,
+    },
+    // Form Modal Styles (keeping existing ones)
     modalContainer: {
         flex: 1,
         backgroundColor: "#fff",
@@ -677,7 +873,7 @@ const styles = StyleSheet.create({
         color: "#9CA3AF",
         fontSize: 14,
     },
-    // Image Picker Modal
+    // Image Picker Modal (keeping existing ones)
     imageModalOverlay: {
         flex: 1,
         backgroundColor: "rgba(0, 0, 0, 0.5)",
