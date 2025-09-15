@@ -222,7 +222,7 @@ const Profile = () => {
         <SafeAreaView style={styles.container}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : undefined}
-                style={{ flex: 1 }}
+                style={{ flex: 1,top:30 }}
             >
                 <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
                     {/* Profile Section */}
@@ -327,6 +327,7 @@ const styles = StyleSheet.create({
 
     // Profile
     profileSection: {
+
         alignItems: "center",
         paddingVertical: 30,
         backgroundColor: "#fff",
@@ -334,6 +335,7 @@ const styles = StyleSheet.create({
     },
     profileImageContainer: { position: "relative", marginBottom: 12 },
     profileImage: {
+
         width: 120,
         height: 120,
         borderRadius: 60,

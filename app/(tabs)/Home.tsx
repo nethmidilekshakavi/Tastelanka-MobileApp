@@ -15,9 +15,9 @@ import { Search, Bell } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
 import { db } from "@/config/firebaseConfig";
-import {collection, query, orderBy, onSnapshot, where, getDoc, doc} from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, where, getDoc, doc } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { getAuth } from "firebase/auth";
+import {getAuth} from "firebase/auth";
 
 interface Recipe {
     rid?: string;

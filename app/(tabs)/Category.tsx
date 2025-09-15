@@ -8,10 +8,11 @@ import {
     StyleSheet,
     SafeAreaView,
     ScrollView,
+    Modal,
 } from "react-native";
 import { db } from "@/config/firebaseConfig";
 import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
-import Icon from "react-native-vector-icons/MaterialIcons"; // install react-native-vector-icons
+import Icon from "react-native-vector-icons/MaterialIcons";
 
 interface Recipe {
     rid?: string;
@@ -53,6 +54,8 @@ const getRecipeImageSource = (recipe: Recipe) => {
 const CategoryPage = () => {
     const [recipes, setRecipes] = useState<Recipe[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+    const [modalVisible, setModalVisible] = useState(false);
 
     useEffect(() => {
         let q;
@@ -78,8 +81,8 @@ const CategoryPage = () => {
     }, [selectedCategory]);
 
     const handleRecipePress = (recipe: Recipe) => {
-        console.log("Recipe clicked:", recipe.title);
-        // You can navigate to a recipe detail page here
+        setSelectedRecipe(recipe);
+        setModalVisible(true);
     };
 
     const renderCategoryCard = (category: { name: string; image: string }) => (
@@ -100,19 +103,55 @@ const CategoryPage = () => {
 
     const renderRecipeCard = ({ item }: { item: Recipe }) => {
         const imageSource = getRecipeImageSource(item);
+
         return (
-            <TouchableOpacity style={styles.recipeCard} onPress={() => handleRecipePress(item)}>
-                {imageSource ? (
-                    <Image source={imageSource.source} style={styles.recipeImage} />
-                ) : (
-                    <View style={[styles.recipeImage, { justifyContent: "center", alignItems: "center" }]}>
-                        <Icon name="restaurant-menu" size={40} color="#9CA3AF" />
-                        <Text>No Image</Text>
+            <View style={styles.card}>
+                <TouchableOpacity
+                    style={styles.imageContainer}
+                    activeOpacity={0.7}
+                    onPress={() => handleRecipePress(item)}
+                >
+                    {imageSource ? (
+                        <Image source={imageSource.source} style={styles.image} resizeMode="cover" />
+                    ) : (
+                        <View style={styles.placeholder}>
+                            <Icon name="restaurant-menu" size={40} color="#9CA3AF" />
+                            <Text style={styles.noImageText}>No Image</Text>
+                        </View>
+                    )}
+                    {item.category && (
+                        <View style={styles.categoryBadge}>
+                            <Text style={styles.categoryBadgeText}>{item.category}</Text>
+                        </View>
+                    )}
+                </TouchableOpacity>
+
+                <View style={styles.cardContent}>
+                    <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
+                    {item.description && (
+                        <Text style={styles.description} numberOfLines={2}>{item.description}</Text>
+                    )}
+
+                    <View style={styles.recipeStats}>
+                        <View style={styles.statItem}>
+                            <Icon name="schedule" size={14} color="#6B7280" />
+                            <Text style={styles.statText}>30 min</Text>
+                        </View>
+                        <View style={styles.statItem}>
+                            <Icon name="people" size={14} color="#6B7280" />
+                            <Text style={styles.statText}>2-4 servings</Text>
+                        </View>
                     </View>
-                )}
-                <Text style={styles.recipeTitle}>{item.title}</Text>
-                {item.description && <Text style={styles.recipeDesc}>{item.description}</Text>}
-            </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.viewButton}
+                        onPress={() => handleRecipePress(item)}
+                    >
+                        <Icon name="visibility" size={16} color="#3B82F6" />
+                        <Text style={styles.viewButtonText}>View Recipe</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
         );
     };
 
@@ -139,6 +178,49 @@ const CategoryPage = () => {
                     )}
                 </View>
             </ScrollView>
+
+            {/* Modal for Recipe Details */}
+            <Modal
+                visible={modalVisible}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <ScrollView>
+                            {selectedRecipe?.imageUrl && (
+                                <Image source={{ uri: selectedRecipe.imageUrl }} style={styles.modalImage} resizeMode="cover" />
+                            )}
+                            <Text style={styles.modalTitle}>{selectedRecipe?.title}</Text>
+                            {selectedRecipe?.category && (
+                                <Text style={styles.modalCategory}>{selectedRecipe.category}</Text>
+                            )}
+                            {selectedRecipe?.description && (
+                                <Text style={styles.modalDescription}>{selectedRecipe.description}</Text>
+                            )}
+                            {selectedRecipe?.ingredients && (
+                                <>
+                                    <Text style={styles.modalSectionTitle}>Ingredients:</Text>
+                                    <Text style={styles.modalText}>{selectedRecipe.ingredients}</Text>
+                                </>
+                            )}
+                            {selectedRecipe?.instructions && (
+                                <>
+                                    <Text style={styles.modalSectionTitle}>Instructions:</Text>
+                                    <Text style={styles.modalText}>{selectedRecipe.instructions}</Text>
+                                </>
+                            )}
+                        </ScrollView>
+                        <TouchableOpacity
+                            style={styles.modalCloseButton}
+                            onPress={() => setModalVisible(false)}
+                        >
+                            <Text style={styles.modalCloseText}>Close</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 };
@@ -146,19 +228,35 @@ const CategoryPage = () => {
 export default CategoryPage;
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#F8FAFC" },
+    container: { flex: 1, backgroundColor: "#F8FAFC", top: 30 },
     sectionTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
     categoryCard: { width: "100%", height: 120, borderRadius: 12, overflow: "hidden", marginBottom: 15 },
     categoryImage: { width: "100%", height: "100%" },
-    categoryOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0,0,0,0.3)",
-        justifyContent: "center",
-        alignItems: "center",
-    },
+    categoryOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.3)", justifyContent: "center", alignItems: "center" },
     categoryText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
-    recipeCard: { backgroundColor: "#fff", borderRadius: 12, marginBottom: 15, overflow: "hidden" },
-    recipeImage: { width: "100%", height: 150 },
-    recipeTitle: { fontSize: 16, fontWeight: "bold", padding: 8 },
-    recipeDesc: { fontSize: 14, color: "#555", paddingHorizontal: 8, paddingBottom: 8 },
+    card: { flex: 1, backgroundColor: "#fff", margin: 6, borderRadius: 16, overflow: "hidden", elevation: 4, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8 },
+    imageContainer: { position: "relative", height: 140 },
+    image: { width: "100%", height: "100%" },
+    placeholder: { width: "100%", height: "100%", justifyContent: "center", alignItems: "center", backgroundColor: "#F1F5F9" },
+    noImageText: { color: "#9CA3AF", fontSize: 12, marginTop: 4 },
+    categoryBadge: { position: "absolute", top: 8, right: 8, backgroundColor: "rgba(255,255,255,0.9)", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
+    categoryBadgeText: { fontSize: 10, fontWeight: "600", color: "#374151" },
+    cardContent: { padding: 12 },
+    title: { fontWeight: "700", fontSize: 16, color: "#1E293B", marginBottom: 4 },
+    description: { fontSize: 12, color: "#6B7280", lineHeight: 16, marginBottom: 8 },
+    recipeStats: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
+    statItem: { flexDirection: "row", alignItems: "center", gap: 4 },
+    statText: { fontSize: 11, color: "#6B7280", fontWeight: "500" },
+    viewButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: "#EEF2FF", borderRadius: 8 },
+    viewButtonText: { color: "#3B82F6", fontSize: 12, fontWeight: "600" },
+    modalContainer: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" },
+    modalContent: { width: "90%", maxHeight: "80%", backgroundColor: "#fff", borderRadius: 16, padding: 16 },
+    modalImage: { width: "100%", height: 200, borderRadius: 12, marginBottom: 12 },
+    modalTitle: { fontSize: 20, fontWeight: "700", marginBottom: 4 },
+    modalCategory: { fontSize: 14, color: "#6B7280", marginBottom: 8 },
+    modalDescription: { fontSize: 14, color: "#374151", marginBottom: 8 },
+    modalSectionTitle: { fontSize: 16, fontWeight: "600", marginTop: 12, marginBottom: 4 },
+    modalText: { fontSize: 14, color: "#374151", marginBottom: 8 },
+    modalCloseButton: { marginTop: 12, backgroundColor: "#3B82F6", padding: 10, borderRadius: 8, alignItems: "center" },
+    modalCloseText: { color: "#fff", fontWeight: "600" },
 });
