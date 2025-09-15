@@ -23,11 +23,17 @@ import {Category} from "@/types/Category";
 
 const ASSET_IMAGES = [
     { id: 1, name: "Rice & Curry", source: require("../assets/images/fac132dbf73ecd95071f6da669ce7f15.jpg") },
-    { id: 2, name: "Kottu", source: require("../assets/images/afa40a8a807f868115dc42478d05f8b0.jpg") },
+    { id: 2, name: "Milk Rice", source: require("../assets/images/rice & curry/kribath.jpg") },
+    { id: 3, name: "Polos Curry", source: require("../assets/images/rice & curry/polos.jpg") },
+    { id: 4, name: "Kokis", source: require("../assets/images/sweets/kokis.jpg") },
 ];
 
 const { width: screenWidth } = Dimensions.get('window');
-const cardWidth = (screenWidth - 80) / 5; // 5 cards per row with margins
+const numColumns = screenWidth > 768 ? 3 : 2;
+const cardMargin = 10;
+const totalMargin = cardMargin * 2 * numColumns + 60;
+const cardWidth = 300;
+
 
 export const RecipeManagement = () => {
     const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -137,10 +143,8 @@ export const RecipeManagement = () => {
         }
 
         try {
-            // Firestore document reference to the recipe
             const recipeRef = doc(db, "recipes", recipe.rid);
-            await deleteDoc(recipeRef);  // Delete document
-            // Clear selected recipe if it was being edited
+            await deleteDoc(recipeRef);
             if (selectedRecipe?.rid === recipe.rid) cancelEdit();
             Alert.alert("Success", "Recipe deleted successfully!");
         } catch (error) {
@@ -148,7 +152,6 @@ export const RecipeManagement = () => {
             Alert.alert("Error", "Failed to delete recipe");
         }
     };
-
 
     const openAddForm = () => {
         setShowForm(true);
@@ -199,11 +202,6 @@ export const RecipeManagement = () => {
         return image ? image.source : null;
     };
 
-    const truncateText = (text: string, maxLength: number = 50) => {
-        if (text.length <= maxLength) return text;
-        return text.substring(0, maxLength) + "...";
-    };
-
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
@@ -213,13 +211,98 @@ export const RecipeManagement = () => {
         );
     }
 
+    const renderRecipeCard = ({ item }) => {
+        const imageSource = getRecipeImageSource(item);
+
+        return (
+            <View style={[styles.modernRecipeCard, { width: cardWidth }]}>
+                {/* Recipe Image Container - Fixed height and proper image handling */}
+                <View style={styles.modernImageContainer}>
+                    <TouchableOpacity
+                        onPress={() => openDetailView(item)}
+                        activeOpacity={0.9}
+                        style={styles.imageContainer}
+                    >
+                        {imageSource ? (
+                            <Image
+                                source={imageSource}
+                                style={styles.modernRecipeImage}
+                                resizeMode="cover"
+                            />
+                        ) : (
+                            <View style={styles.modernImagePlaceholder}>
+                                <Icon name="restaurant-menu" size={40} color="#9CA3AF" />
+                                <Text style={styles.noImageText}>No Image</Text>
+                            </View>
+                        )}
+                    </TouchableOpacity>
+
+                    {/* Category Badge - Positioned over image */}
+                    <View style={styles.categoryBadgeOverlay}>
+                        <Text style={styles.categoryBadgeOverlayText}>
+                            {item.category || "Uncategorized"}
+                        </Text>
+                    </View>
+
+                    {/* Action Buttons - Positioned over image */}
+                    <View style={styles.modernActionButtons}>
+                        <TouchableOpacity
+                            style={styles.modernEditButton}
+                            onPress={() => openEdit(item)}
+                        >
+                            <Icon name="edit" size={16} color="#fff" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.modernDeleteButton}
+                            onPress={() => confirmDelete(item)}
+                        >
+                            <Icon name="delete" size={16} color="#fff" />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
+                {/* Recipe Info */}
+                <View style={styles.modernRecipeInfo}>
+                    <Text style={styles.modernRecipeTitle} numberOfLines={2}>
+                        {item.title}
+                    </Text>
+
+                    <Text style={styles.modernRecipeDescription} numberOfLines={2}>
+                        {item.description || "A delightful recipe perfect for any occasion."}
+                    </Text>
+
+                    {/* Recipe Stats */}
+                    <View style={styles.recipeStats}>
+                        <View style={styles.statItem}>
+                            <Icon name="schedule" size={14} color="#6B7280" />
+                            <Text style={styles.statText}>30 min</Text>
+                        </View>
+                        <View style={styles.statItem}>
+                            <Icon name="people" size={14} color="#6B7280" />
+                            <Text style={styles.statText}>2 servings</Text>
+                        </View>
+                    </View>
+
+                    {/* View Recipe Button */}
+                    <TouchableOpacity
+                        style={styles.viewRecipeButton}
+                        onPress={() => openDetailView(item)}
+                    >
+                        <Icon name="visibility" size={16} color="#fff" />
+                        <Text style={styles.viewRecipeButtonText}>View Recipe</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+    };
+
     return (
         <SafeAreaView style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
                 <View>
                     <Text style={styles.headerTitle}>My Recipes</Text>
-                    <Text style={styles.headerSubtitle}>{recipes.length} recipes available</Text>
+                    <Text style={styles.headerSubtitle}>{recipes.length} delicious recipes</Text>
                 </View>
                 <TouchableOpacity style={styles.addButton} onPress={openAddForm}>
                     <Icon name="add" size={24} color="#fff" />
@@ -232,63 +315,20 @@ export const RecipeManagement = () => {
                 <FlatList
                     data={recipes}
                     keyExtractor={(item) => item.rid!}
-                    numColumns={5}
+                    numColumns={numColumns}
                     scrollEnabled={false}
-                    contentContainerStyle={styles.recipesContainer}
-                    renderItem={({ item }) => (
-                        <View style={styles.recipeCard}>
-                            <TouchableOpacity
-                                style={styles.imageContainer}
-                                onPress={() => openDetailView(item)}
-                                activeOpacity={0.8}
-                            >
-                                {getRecipeImageSource(item) ? (
-                                    <Image source={getRecipeImageSource(item)} style={styles.recipeImage} />
-                                ) : (
-                                    <View style={styles.recipeImagePlaceholder}>
-                                        <Icon name="restaurant-menu" size={20} color="#9CA3AF" />
-                                    </View>
-                                )}
-                                <View style={styles.imageOverlay}>
-                                    <TouchableOpacity
-                                        style={styles.editIconButton}
-                                        onPress={() => openEdit(item)}
-                                    >
-                                        <Icon name="edit" size={12} color="#fff" />
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={styles.deleteIconButton}
-                                        onPress={() => confirmDelete(item)}
-                                    >
-                                        <Icon name="delete" size={12} color="#fff" />
-                                    </TouchableOpacity>
-                                </View>
-                            </TouchableOpacity>
-
-                            <View style={styles.recipeInfo}>
-                                <Text style={styles.recipeTitle} numberOfLines={1}>
-                                    {item.title}
-                                </Text>
-                                <Text style={styles.recipeCategory} numberOfLines={1}>
-                                    {item.category || "Uncategorized"}
-                                </Text>
-                                <Text style={styles.recipeDescription} numberOfLines={2}>
-                                    {item.description || "No description"}
-                                </Text>
-                                <TouchableOpacity
-                                    style={styles.seeMoreButton}
-                                    onPress={() => openDetailView(item)}
-                                >
-                                    <Text style={styles.seeMoreText}>See More</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    )}
+                    contentContainerStyle={styles.modernRecipesContainer}
+                    columnWrapperStyle={numColumns > 1 ? styles.row : null}
+                    renderItem={renderRecipeCard}
+                    ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
                             <Icon name="restaurant-menu" size={64} color="#D1D5DB" />
                             <Text style={styles.emptyTitle}>No recipes yet</Text>
                             <Text style={styles.emptySubtitle}>Add your first recipe to get started</Text>
+                            <TouchableOpacity style={styles.emptyAddButton} onPress={openAddForm}>
+                                <Text style={styles.emptyAddButtonText}>Add Recipe</Text>
+                            </TouchableOpacity>
                         </View>
                     }
                 />
@@ -298,11 +338,10 @@ export const RecipeManagement = () => {
             <Modal
                 visible={showDetailModal}
                 animationType="slide"
-                presentationStyle="fullScreen"  // change here
+                presentationStyle="fullScreen"
                 onRequestClose={() => setShowDetailModal(false)}
             >
-
-            <SafeAreaView style={styles.detailContainer}>
+                <SafeAreaView style={styles.detailContainer}>
                     <View style={styles.detailHeader}>
                         <TouchableOpacity
                             onPress={() => setShowDetailModal(false)}
@@ -316,7 +355,7 @@ export const RecipeManagement = () => {
                                 style={styles.detailEditButton}
                                 onPress={() => detailRecipe && openEdit(detailRecipe)}
                             >
-                                <Icon name="edit" size={20} color="#6366F1" />
+                                <Icon name="edit" size={20} color="#3B82F6" />
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={styles.detailDeleteButton}
@@ -330,15 +369,26 @@ export const RecipeManagement = () => {
                     <ScrollView style={styles.detailContent} showsVerticalScrollIndicator={false}>
                         {detailRecipe && (
                             <>
+                                <Image source={getRecipeImageSource(detailRecipe)} style={styles.detailImage} />
+                                <Text>{detailRecipe.title}</Text>
+                                <Text>{detailRecipe.description}</Text>
+                                <Text>{detailRecipe.ingredients}</Text>
+                                <Text>{detailRecipe.instructions}</Text>
+                            </>
+                        )}
+
+                        <>
                                 <View style={styles.detailImageSection}>
                                     {getRecipeImageSource(detailRecipe) ? (
                                         <Image
                                             source={getRecipeImageSource(detailRecipe)}
                                             style={styles.detailImage}
+                                            resizeMode="cover"
                                         />
                                     ) : (
                                         <View style={styles.detailImagePlaceholder}>
                                             <Icon name="restaurant-menu" size={60} color="#9CA3AF" />
+                                            <Text style={styles.noImageText}>No Image Available</Text>
                                         </View>
                                     )}
                                 </View>
@@ -404,8 +454,12 @@ export const RecipeManagement = () => {
                                 style={styles.imageSelector}
                                 onPress={() => setShowImagePicker(true)}
                             >
-                                {selectedImageId ? (
-                                    <Image source={getSelectedImageSource()} style={styles.selectedImage} />
+                                {selectedImageId && getSelectedImageSource() ? (
+                                    <Image
+                                        source={getSelectedImageSource()}
+                                        style={styles.selectedImage}
+                                        resizeMode="cover"
+                                    />
                                 ) : (
                                     <View style={styles.imagePlaceholder}>
                                         <Icon name="add-a-photo" size={32} color="#9CA3AF" />
@@ -514,11 +568,15 @@ export const RecipeManagement = () => {
                                     ]}
                                     onPress={() => selectImage(item.id)}
                                 >
-                                    <Image source={item.source} style={styles.imageOptionImage} />
+                                    <Image
+                                        source={item.source}
+                                        style={styles.imageOptionImage}
+                                        resizeMode="cover"
+                                    />
                                     <Text style={styles.imageOptionText}>{item.name}</Text>
                                     {selectedImageId === item.id && (
                                         <View style={styles.selectedOverlay}>
-                                            <Icon name="check-circle" size={20} color="#6366F1" />
+                                            <Icon name="check-circle" size={20} color="#3B82F6" />
                                         </View>
                                     )}
                                 </TouchableOpacity>
@@ -557,14 +615,14 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     addButton: {
-        backgroundColor: "#6366F1",
+        backgroundColor: "#3B82F6",
         flexDirection: "row",
         alignItems: "center",
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 12,
-        shadowColor: "#6366F1",
-        shadowOffset: { width: 0, height: 4 },
+        shadowColor: "#3B82F6",
+        shadowOffset: {width: 0, height: 4},
         shadowOpacity: 0.3,
         shadowRadius: 8,
         elevation: 4,
@@ -591,111 +649,164 @@ const styles = StyleSheet.create({
         color: "#64748B",
         fontSize: 16,
     },
-    recipesContainer: {
+    modernRecipesContainer: {
         paddingBottom: 40,
     },
-    recipeCard: {
-        width: cardWidth,
+    row: {
+        justifyContent: 'space-between',
+        paddingHorizontal: 0,
+    },
+    modernRecipeCard: {
         backgroundColor: "#fff",
-        borderRadius: 12,
+        borderRadius: 16,
         overflow: "hidden",
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
+        shadowOffset: {width: 0, height: 4},
         shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
-        margin: 8,
+        shadowRadius: 8,
+        elevation: 4,
+        marginBottom: 16,
+    },
+    modernImageContainer: {
+        position: "relative",
+        height: 180,
+        backgroundColor: "#F1F5F9",
     },
     imageContainer: {
-        position: "relative",
-        height: 100,
-    },
-    recipeImage: {
         width: "100%",
         height: "100%",
-        resizeMode: "cover",
     },
-    recipeImagePlaceholder: {
+    modernRecipeImage: {
+        width: "100%",
+        height: "100%",
+    },
+    modernImagePlaceholder: {
         width: "100%",
         height: "100%",
         backgroundColor: "#F1F5F9",
         justifyContent: "center",
         alignItems: "center",
     },
-    imageOverlay: {
-        position: "absolute",
-        top: 4,
-        right: 4,
-        flexDirection: "row",
-        gap: 4,
-    },
-    editIconButton: {
-        backgroundColor: "rgba(99, 102, 241, 0.9)",
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    deleteIconButton: {
-        backgroundColor: "rgba(239, 68, 68, 0.9)",
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    recipeInfo: {
-        padding: 8,
-    },
-    recipeTitle: {
+    noImageText: {
+        color: "#9CA3AF",
         fontSize: 12,
+        marginTop: 4,
+    },
+    categoryBadgeOverlay: {
+        position: "absolute",
+        top: 8,
+        right: 8,
+        backgroundColor: "rgba(255, 255, 255, 0.95)",
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+        backdropFilter: "blur(10px)",
+    },
+    categoryBadgeOverlayText: {
+        fontSize: 10,
+        fontWeight: "600",
+        color: "#374151",
+    },
+    modernActionButtons: {
+        position: "absolute",
+        top: 8,
+        left: 8,
+        flexDirection: "row",
+        gap: 6,
+    },
+    modernEditButton: {
+        backgroundColor: "rgba(59, 130, 246, 0.9)",
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        justifyContent: "center",
+        alignItems: "center",
+        backdropFilter: "blur(10px)",
+    },
+    modernDeleteButton: {
+        backgroundColor: "rgba(239, 68, 68, 0.9)",
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        justifyContent: "center",
+        alignItems: "center",
+        backdropFilter: "blur(10px)",
+    },
+    modernRecipeInfo: {
+        padding: 16,
+    },
+    modernRecipeTitle: {
+        fontSize: 16,
         fontWeight: "700",
         color: "#1E293B",
-        marginBottom: 2,
-    },
-    recipeCategory: {
-        fontSize: 10,
-        color: "#6366F1",
-        fontWeight: "500",
-        marginBottom: 4,
-    },
-    recipeDescription: {
-        fontSize: 10,
-        color: "#64748B",
-        lineHeight: 12,
         marginBottom: 6,
+        lineHeight: 20,
     },
-    seeMoreButton: {
-        alignSelf: "flex-start",
-        paddingVertical: 2,
-        paddingHorizontal: 4,
-        backgroundColor: "#F1F5F9",
-        borderRadius: 4,
+    modernRecipeDescription: {
+        fontSize: 13,
+        color: "#64748B",
+        lineHeight: 18,
+        marginBottom: 12,
     },
-    seeMoreText: {
-        fontSize: 9,
-        color: "#6366F1",
+    recipeStats: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginBottom: 14,
+    },
+    statItem: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+    },
+    statText: {
+        fontSize: 11,
+        color: "#6B7280",
+        fontWeight: "500",
+    },
+    viewRecipeButton: {
+        backgroundColor: "#3B82F6",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 10,
+        borderRadius: 8,
+        gap: 4,
+    },
+    viewRecipeButtonText: {
+        color: "#fff",
         fontWeight: "600",
+        fontSize: 13,
     },
     emptyContainer: {
         alignItems: "center",
         justifyContent: "center",
-        paddingVertical: 60,
+        paddingVertical: 80,
         paddingHorizontal: 40,
     },
     emptyTitle: {
-        fontSize: 20,
-        fontWeight: "600",
+        fontSize: 24,
+        fontWeight: "700",
         color: "#374151",
         marginTop: 16,
+        marginBottom: 8,
     },
     emptySubtitle: {
-        fontSize: 14,
+        fontSize: 16,
         color: "#9CA3AF",
         textAlign: "center",
-        marginTop: 8,
-        lineHeight: 20,
+        marginBottom: 24,
+        lineHeight: 24,
+    },
+    emptyAddButton: {
+        backgroundColor: "#3B82F6",
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 12,
+    },
+    emptyAddButtonText: {
+        color: "#fff",
+        fontWeight: "600",
+        fontSize: 16,
     },
     // Detail Modal Styles
     detailContainer: {
@@ -729,17 +840,16 @@ const styles = StyleSheet.create({
     detailContent: {
         flex: 1,
     },
-
     detailImage: {
         width: "100%",
         height: "100%",
-        resizeMode: "cover",
     },
     detailImagePlaceholder: {
         width: "100%",
         height: "100%",
         justifyContent: "center",
         alignItems: "center",
+        backgroundColor: "#F1F5F9",
     },
     detailInfoSection: {
         padding: 20,
@@ -760,7 +870,7 @@ const styles = StyleSheet.create({
     },
     categoryBadgeText: {
         fontSize: 12,
-        color: "#6366F1",
+        color: "#3B82F6",
         fontWeight: "600",
     },
     detailSection: {
@@ -777,7 +887,169 @@ const styles = StyleSheet.create({
         color: "#64748B",
         lineHeight: 24,
     },
-    // Form Modal Styles (keeping existing ones)
+    // Modern Detail View Styles
+    detailHeroSection: {
+        height: 400,
+        position: "relative",
+        backgroundColor: "#1F2937",
+    },
+    detailHeroImage: {
+        width: "100%",
+        height: "100%",
+    },
+    detailHeroPlaceholder: {
+        width: "100%",
+        height: "100%",
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#1F2937",
+    },
+    heroOverlay: {
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        background: "linear-gradient(transparent, rgba(0,0,0,0.7))",
+        backgroundColor: "rgba(0,0,0,0.6)",
+        padding: 24,
+    },
+    heroTitle: {
+        fontSize: 32,
+        fontWeight: "800",
+        color: "#FFFFFF",
+        marginBottom: 12,
+        lineHeight: 38,
+    },
+    heroCategoryBadge: {
+        alignSelf: "flex-start",
+        backgroundColor: "rgba(255, 255, 255, 0.2)",
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
+        backdropFilter: "blur(10px)",
+    },
+    heroCategoryText: {
+        fontSize: 14,
+        color: "#FFFFFF",
+        fontWeight: "600",
+    },
+    recipeInfoCard: {
+        backgroundColor: "#FFFFFF",
+        margin: 20,
+        marginTop: -30,
+        borderRadius: 24,
+        padding: 32,
+        shadowColor: "#000",
+        shadowOffset: {width: 0, height: 8},
+        shadowOpacity: 0.15,
+        shadowRadius: 24,
+        elevation: 12,
+    },
+    descriptionSection: {
+        marginBottom: 32,
+        paddingBottom: 24,
+        borderBottomWidth: 1,
+        borderBottomColor: "#E5E7EB",
+    },
+    descriptionText: {
+        fontSize: 16,
+        color: "#6B7280",
+        lineHeight: 26,
+        textAlign: "left",
+    },
+    twoColumnContainer: {
+        flexDirection: "row",
+        gap: 32,
+        marginBottom: 32,
+    },
+    leftColumn: {
+        flex: 1,
+    },
+    rightColumn: {
+        flex: 1,
+    },
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: "700",
+        color: "#111827",
+        marginBottom: 20,
+    },
+    ingredientsList: {
+        gap: 12,
+    },
+    ingredientItem: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        paddingVertical: 4,
+    },
+    ingredientBullet: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: "#3B82F6",
+        marginTop: 8,
+        marginRight: 12,
+    },
+    ingredientText: {
+        fontSize: 14,
+        color: "#4B5563",
+        lineHeight: 22,
+        flex: 1,
+    },
+    instructionsList: {
+        gap: 16,
+    },
+    instructionStep: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+    },
+    stepNumber: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: "#3B82F6",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 12,
+        marginTop: 2,
+    },
+    stepNumberText: {
+        fontSize: 14,
+        fontWeight: "700",
+        color: "#FFFFFF",
+    },
+    instructionText: {
+        fontSize: 14,
+        color: "#4B5563",
+        lineHeight: 22,
+        flex: 1,
+    },
+    noDataText: {
+        fontSize: 14,
+        color: "#9CA3AF",
+        fontStyle: "italic",
+    },
+    printButton: {
+        backgroundColor: "#3B82F6",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 16,
+        paddingHorizontal: 24,
+        borderRadius: 16,
+        gap: 8,
+        shadowColor: "#3B82F6",
+        shadowOffset: {width: 0, height: 4},
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    printButtonText: {
+        color: "#FFFFFF",
+        fontSize: 16,
+        fontWeight: "600",
+    },
+    // Form Modal Styles
     modalContainer: {
         flex: 1,
         backgroundColor: "#fff",
@@ -803,7 +1075,7 @@ const styles = StyleSheet.create({
         color: "#1E293B",
     },
     saveButton: {
-        backgroundColor: "#6366F1",
+        backgroundColor: "#3B82F6",
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 8,
@@ -865,7 +1137,6 @@ const styles = StyleSheet.create({
     selectedImage: {
         width: "100%",
         height: "100%",
-        resizeMode: "cover",
     },
     imagePlaceholder: {
         flex: 1,
@@ -878,7 +1149,7 @@ const styles = StyleSheet.create({
         color: "#9CA3AF",
         fontSize: 14,
     },
-    // Image Picker Modal (keeping existing ones)
+    // Image Picker Modal
     imageModalOverlay: {
         flex: 1,
         backgroundColor: "rgba(0, 0, 0, 0.5)",
@@ -917,12 +1188,11 @@ const styles = StyleSheet.create({
         borderColor: "transparent",
     },
     selectedImageOption: {
-        borderColor: "#6366F1",
+        borderColor: "#3B82F6",
     },
     imageOptionImage: {
         width: "100%",
         height: 100,
-        resizeMode: "cover",
     },
     imageOptionText: {
         padding: 8,
@@ -939,9 +1209,4 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         padding: 2,
     },
-    detailImageSection: {
-        height: 300, // previously 250
-        backgroundColor: "#F1F5F9",
-    },
-
 });

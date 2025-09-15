@@ -118,8 +118,8 @@ const UsersList = () => {
         }
 
         try {
-            const userRef = doc(db, "users", userId);  // Firestore document reference
-            await deleteDoc(userRef);                  // Delete document
+            const userRef = doc(db, "users", userId);
+            await deleteDoc(userRef);
             setSelectedUser(null);
             Alert.alert("Success", "User deleted successfully!");
         } catch (error) {
@@ -128,7 +128,7 @@ const UsersList = () => {
         }
     };
 
-    // Open edit modal
+
     const handleEdit = (user: UserDoc) => {
         setSelectedUser(user);
         setUpdatedName(user.fullName || "");
