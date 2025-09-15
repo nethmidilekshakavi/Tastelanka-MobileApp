@@ -370,6 +370,10 @@ const Home = () => {
             </View>
 
             <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+                <Text style={[styles.sectionDescription, { marginBottom: 20, paddingHorizontal: 20 }]}>
+                    Explore the rich and delicious flavors of Sri Lankan cuisine. Find your favorite dishes and try something new!
+                </Text>
+
                 {/* Categories */}
                 <View style={{ marginBottom: 20, paddingHorizontal: 20 }}>
                     <View style={styles.sectionHeader}>
@@ -578,4 +582,11 @@ const styles = StyleSheet.create({
     saveButtonText: { color: "#fff", fontSize: 14, fontWeight: "600" },
     shareButton: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#fff", paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, borderWidth: 1, borderColor: "#3B82F6" },
     shareButtonText: { color: "#3B82F6", fontSize: 14, fontWeight: "600" },
+    sectionDescription: {
+        fontSize: 14,
+        color: "#6B7280",
+        marginTop: 7,
+        lineHeight: 20,
+    },
+
 });

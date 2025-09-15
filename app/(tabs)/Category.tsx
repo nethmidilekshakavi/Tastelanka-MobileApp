@@ -157,6 +157,11 @@ const CategoryPage = () => {
 
     return (
         <SafeAreaView style={styles.container}>
+            <View style={styles.headerContainer}>
+                <Text style={styles.headerTitle}>Taste Lanka Recipes</Text>
+                <Text style={styles.headerSubtitle}>Choose your favorite foods 🇱🇰🍽️ </Text>
+            </View>
+
             <ScrollView>
                 {/* Categories */}
                 <View style={{ padding: 20 }}>{categories.map(renderCategoryCard)}</View>
@@ -259,4 +264,27 @@ const styles = StyleSheet.create({
     modalText: { fontSize: 14, color: "#374151", marginBottom: 8 },
     modalCloseButton: { marginTop: 12, backgroundColor: "#3B82F6", padding: 10, borderRadius: 8, alignItems: "center" },
     modalCloseText: { color: "#fff", fontWeight: "600" },
+    headerContainer: {
+        padding: 20,
+        backgroundColor: "#4CAF50",
+        alignItems: "center",
+        color:"#fff",
+        justifyContent: "center",
+        borderBottomWidth: 1,
+        borderBottomColor: "#E5E7EB",
+        marginBottom: 10,
+    },
+    headerTitle: {
+        fontSize: 22,
+        fontWeight: "700",
+        color: "#fff",
+    },
+    headerSubtitle: {
+        fontSize: 18,
+        fontWeight: "400",
+        color: "#fff",
+        marginTop: 4,
+    },
+
+
 });
