@@ -11,13 +11,15 @@ import {
     SafeAreaView,
     Modal, Alert,
 } from "react-native";
-import { Search, Bell } from "lucide-react-native";
+import { Search, Bell, MessageCircle } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
 import { db } from "@/config/firebaseConfig";
 import { collection, query, orderBy, onSnapshot, where, getDoc, doc } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import {getAuth} from "firebase/auth";
+
+
 
 interface Recipe {
     rid?: string;
@@ -325,18 +327,19 @@ const Home = () => {
         <SafeAreaView style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
+                {/* Left: Avatar + Greetings */}
                 <View style={styles.headerLeft}>
                     <TouchableOpacity onPress={() => router.push("/(tabs)/Profile")}>
                         <Image
                             source={{
                                 uri: currentUser?.photoURL
                                     ? currentUser.photoURL
-                                    : "https://via.placeholder.com/150/ccc/fff?text=User", // fallback
+                                    : "https://via.placeholder.com/150/ccc/fff?text=User",
                             }}
                             style={styles.avatar}
                         />
                     </TouchableOpacity>
-                    <View>
+                    <View style={{ marginLeft: 12 }}>
                         <Text style={styles.headerTitle}>
                             Hello, {currentUser?.fullName || "Guest"}!
                         </Text>
@@ -344,10 +347,19 @@ const Home = () => {
                         <Text style={styles.headerSubtitle}>Check Amazing Recipes</Text>
                     </View>
                 </View>
-                <View style={{ position: "relative" }}>
-                    <TouchableOpacity>
+
+                {/* Right: Bell + Message Icons */}
+                <View style={styles.headerRight}>
+                    {/* Notification Bell */}
+                    <TouchableOpacity style={styles.iconButton}>
                         <Bell size={24} color="white" />
                         <View style={styles.notificationDot} />
+                    </TouchableOpacity>
+
+                    {/* Message Icon */}
+                    <TouchableOpacity style={styles.iconButton}>
+                        <MessageCircle size={24} color="white" />
+                        <View style={[styles.notificationDot, { backgroundColor: "#34D399" }]} />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -524,13 +536,7 @@ const styles = StyleSheet.create({
     viewButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: "#EEF2FF", borderRadius: 8 },
     viewButtonText: { color: "#3B82F6", fontSize: 12, fontWeight: "600" },
     list: { paddingBottom: 20 },
-    header: {height:150, flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 16, backgroundColor: "#4CAF50", borderBottomLeftRadius: 20, borderBottomRightRadius: 20,top:30 },
-    headerLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
-    avatar: { width: 50, height: 50, borderRadius: 25 },
-    headerTitle: { fontSize: 20, fontWeight: "bold", color: "#fff" },
-    headerSub: { fontSize: 16, color: "#fff" },
-    headerSubtitle: { fontSize: 14, color: "#E8F5E8" },
-    notificationDot: { position: "absolute", top: -2, right: -2, width: 10, height: 10, borderRadius: 5, backgroundColor: "#EF4444" },
+
     addButton: { position: "absolute", bottom: 30, right: 20, backgroundColor: "#3B82F6", padding: 16, borderRadius: 28, elevation: 8, shadowColor: "#3B82F6", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
     emptyState: { alignItems: "center", justifyContent: "center", paddingVertical: 60, paddingHorizontal: 40 },
     emptyStateTitle: { fontSize: 18, fontWeight: "600", color: "#374151", marginTop: 16, marginBottom: 8 },
@@ -589,4 +595,34 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
 
+    header: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingHorizontal: 20,
+        top:30,
+        height:130,
+        paddingVertical: 12,
+        backgroundColor: "#4CAF50",
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
+    },
+    headerLeft: { flexDirection: "row", alignItems: "center" },
+    avatar: { width: 50, height: 50, borderRadius: 25 },
+    headerTitle: { color: "#fff", fontSize: 22, fontWeight: "700" },
+    headerSub: { color: "#E0E7FF", fontSize: 16 },
+    headerSubtitle: { color: "#D1D5DB", fontSize: 12 },
+    headerRight: { flexDirection: "row", alignItems: "center" },
+    iconButton: { marginLeft: 16, position: "relative" },
+    notificationDot: {
+        position: "absolute",
+        top: -2,
+        right: -2,
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: "#EF4444", // red dot
+        borderWidth: 1,
+        borderColor: "#fff",
+    },
 });

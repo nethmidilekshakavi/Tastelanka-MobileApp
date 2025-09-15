@@ -26,10 +26,11 @@ function TabLayout() {
                 options={{
                     title: "Notification",
                     tabBarIcon: ({ color, size }) => (
-                        <AntDesign name="bells" size={size} color={color} />
+                        <AntDesign name="bell" size={size} color={color} />
                     ),
                 }}
             />
+
             <Tabs.Screen
                 name="Category"
                 options={{
