@@ -9,95 +9,132 @@ import {
     SafeAreaView,
     ScrollView,
 } from "react-native";
-import Icon from "react-native-vector-icons/MaterialIcons";
 import { db } from "@/config/firebaseConfig";
 import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
-import { useRoute, useNavigation } from "@react-navigation/native";
+import Icon from "react-native-vector-icons/MaterialIcons"; // install react-native-vector-icons
 
 interface Recipe {
     rid?: string;
     title: string;
     category?: string;
     imageUrl?: string;
+    imageId?: number;
     description?: string;
+    ingredients?: string;
+    instructions?: string;
 }
 
-const Category = () => {
-    const route = useRoute<any>();
-    const navigation = useNavigation();
-    const { categoryName, categoryImage } = route.params;
+const categories = [
+    { name: "Rice & Curry", image: "https://i.pinimg.com/736x/27/58/ca/2758ca3713057831e725c6ba5b9d9f4b.jpg" },
+    { name: "Snacks & Street Food", image: "https://i.pinimg.com/1200x/9c/85/f0/9c85f0d4e0e27df0567c6ff7a9a9f5a0.jpg" },
+    { name: "Seafood & Meat", image: "https://i.pinimg.com/1200x/c1/07/94/c107947d0872bf34e97a6799afc70d88.jpg" },
+    { name: "Sweets & Desserts", image: "https://i.pinimg.com/736x/a9/06/f8/a906f8c16c19085fcc1f974032d72eed.jpg" },
+    { name: "Vegetarian & Healthy", image: "https://i.pinimg.com/1200x/c4/3b/5f/c43b5f231abc4a7156ba15afe65e0612.jpg" },
+];
 
+const ASSET_IMAGES = [
+    { id: 1, name: "Rice & Curry", source: require("../../assets/images/rice & curry/kribath.jpg") },
+    { id: 2, name: "Milk Rice", source: require("../../assets/images/rice & curry/kribath.jpg") },
+    { id: 3, name: "Polos Curry", source: require("../../assets/images/rice & curry/polos.jpg") },
+    { id: 4, name: "Kokis", source: require("../../assets/images/sweets/kokis.jpg") },
+];
+
+const getRecipeImageSource = (recipe: Recipe) => {
+    if (recipe.imageId) {
+        const image = ASSET_IMAGES.find(img => img.id === recipe.imageId);
+        return image ? { source: image.source, isLocal: true } : null;
+    }
+    if (recipe.imageUrl) {
+        return { source: { uri: recipe.imageUrl }, isLocal: false };
+    }
+    return null;
+};
+
+const CategoryPage = () => {
     const [recipes, setRecipes] = useState<Recipe[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
     useEffect(() => {
-        const q = query(
-            collection(db, "recipes"),
-            where('categories', "==", categoryName),
-            orderBy("title")
-        );
+        let q;
+        if (selectedCategory) {
+            q = query(
+                collection(db, "recipes"),
+                where("category", "==", selectedCategory),
+                orderBy("title")
+            );
+        } else {
+            q = query(collection(db, "recipes"), orderBy("title"));
+        }
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const list = snapshot.docs.map((doc) => ({
                 rid: doc.id,
-                ...doc.data(),
-            })) as Recipe[];
+                ...(doc.data() as Recipe),
+            }));
             setRecipes(list);
         });
 
         return () => unsubscribe();
-    }, [categoryName]);
+    }, [selectedCategory]);
 
-    const renderRecipeCard = ({ item }: { item: Recipe }) => (
-        <TouchableOpacity style={styles.card} activeOpacity={0.8}>
-            <Image
-                source={{ uri: item.imageUrl || "https://via.placeholder.com/150/ccc/fff?text=No+Image" }}
-                style={styles.cardImage}
-            />
-            <View style={styles.cardContent}>
-                <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
-                <Text style={styles.cardDesc} numberOfLines={2}>{item.description || "No description"}</Text>
+    const handleRecipePress = (recipe: Recipe) => {
+        console.log("Recipe clicked:", recipe.title);
+        // You can navigate to a recipe detail page here
+    };
+
+    const renderCategoryCard = (category: { name: string; image: string }) => (
+        <TouchableOpacity
+            key={category.name}
+            style={styles.categoryCard}
+            onPress={() =>
+                setSelectedCategory(selectedCategory === category.name ? null : category.name)
+            }
+            activeOpacity={0.8}
+        >
+            <Image source={{ uri: category.image }} style={styles.categoryImage} />
+            <View style={styles.categoryOverlay}>
+                <Text style={styles.categoryText}>{category.name}</Text>
             </View>
         </TouchableOpacity>
     );
 
+    const renderRecipeCard = ({ item }: { item: Recipe }) => {
+        const imageSource = getRecipeImageSource(item);
+        return (
+            <TouchableOpacity style={styles.recipeCard} onPress={() => handleRecipePress(item)}>
+                {imageSource ? (
+                    <Image source={imageSource.source} style={styles.recipeImage} />
+                ) : (
+                    <View style={[styles.recipeImage, { justifyContent: "center", alignItems: "center" }]}>
+                        <Icon name="restaurant-menu" size={40} color="#9CA3AF" />
+                        <Text>No Image</Text>
+                    </View>
+                )}
+                <Text style={styles.recipeTitle}>{item.title}</Text>
+                {item.description && <Text style={styles.recipeDesc}>{item.description}</Text>}
+            </TouchableOpacity>
+        );
+    };
+
     return (
         <SafeAreaView style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <Icon name="arrow-back" size={24} color="#fff" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>{categoryName}</Text>
-                <View style={{ width: 24 }} />
-            </View>
-
-            <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
-                {/* Category Banner */}
-                <View style={styles.bannerContainer}>
-                    <Image source={{ uri: categoryImage }} style={styles.bannerImage} />
-                    <View style={styles.bannerOverlay}>
-                        <Text style={styles.bannerText}>{categoryName}</Text>
-                    </View>
-                </View>
+            <ScrollView>
+                {/* Categories */}
+                <View style={{ padding: 20 }}>{categories.map(renderCategoryCard)}</View>
 
                 {/* Recipes */}
-                <View style={styles.recipeListContainer}>
+                <View style={{ paddingHorizontal: 20, marginTop: 10 }}>
+                    <Text style={styles.sectionTitle}>
+                        {selectedCategory ? `${selectedCategory} Recipes` : "All Recipes"}
+                    </Text>
                     {recipes.length === 0 ? (
-                        <View style={styles.emptyState}>
-                            <Icon name="search-off" size={50} color="#9CA3AF" />
-                            <Text style={styles.emptyTitle}>No Recipes Found</Text>
-                            <Text style={styles.emptySubtitle}>
-                                This category doesn’t have any recipes yet.
-                            </Text>
-                        </View>
+                        <Text style={{ marginTop: 20, color: "#555" }}>No recipes found.</Text>
                     ) : (
                         <FlatList
                             data={recipes}
                             keyExtractor={(item) => item.rid!}
                             renderItem={renderRecipeCard}
-                            numColumns={2}
-                            columnWrapperStyle={{ justifyContent: "space-between" }}
-                            contentContainerStyle={{ paddingBottom: 20 }}
+                            scrollEnabled={false} // inside ScrollView
                         />
                     )}
                 </View>
@@ -106,46 +143,22 @@ const Category = () => {
     );
 };
 
-export default Category;
+export default CategoryPage;
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: "#F8FAFC" },
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        backgroundColor: "#4CAF50",
-        padding: 16,
-    },
-    backBtn: { padding: 6, backgroundColor: "#3B823F", borderRadius: 20 },
-    headerTitle: { fontSize: 18, fontWeight: "bold", color: "#fff" },
-
-    bannerContainer: { width: "100%", height: 180, position: "relative" },
-    bannerImage: { width: "100%", height: "100%" },
-    bannerOverlay: {
+    sectionTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
+    categoryCard: { width: "100%", height: 120, borderRadius: 12, overflow: "hidden", marginBottom: 15 },
+    categoryImage: { width: "100%", height: "100%" },
+    categoryOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0,0,0,0.4)",
+        backgroundColor: "rgba(0,0,0,0.3)",
         justifyContent: "center",
         alignItems: "center",
     },
-    bannerText: { fontSize: 22, fontWeight: "bold", color: "#fff" },
-
-    recipeListContainer: { padding: 16 },
-
-    card: {
-        width: "48%",
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        marginBottom: 16,
-        overflow: "hidden",
-        elevation: 3,
-    },
-    cardImage: { width: "100%", height: 120 },
-    cardContent: { padding: 8 },
-    cardTitle: { fontSize: 14, fontWeight: "bold", color: "#1E293B" },
-    cardDesc: { fontSize: 12, color: "#6B7280" },
-
-    emptyState: { alignItems: "center", marginTop: 60 },
-    emptyTitle: { fontSize: 16, fontWeight: "600", color: "#374151", marginTop: 8 },
-    emptySubtitle: { fontSize: 14, color: "#9CA3AF", textAlign: "center", marginTop: 4 },
+    categoryText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+    recipeCard: { backgroundColor: "#fff", borderRadius: 12, marginBottom: 15, overflow: "hidden" },
+    recipeImage: { width: "100%", height: 150 },
+    recipeTitle: { fontSize: 16, fontWeight: "bold", padding: 8 },
+    recipeDesc: { fontSize: 14, color: "#555", paddingHorizontal: 8, paddingBottom: 8 },
 });

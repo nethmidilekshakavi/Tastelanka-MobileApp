@@ -24,7 +24,7 @@ function TabLayout() {
             <Tabs.Screen
                 name="Notification"
                 options={{
-                    title: 'Nitification',
+                    title: "Notification",
                     tabBarIcon: ({ color, size }) => (
                         <AntDesign name="bells" size={size} color={color} />
                     ),
