@@ -131,17 +131,24 @@ export const RecipeManagement = () => {
     };
 
     const handleDelete = async (recipe: Recipe) => {
+        if (!recipe.rid) {
+            Alert.alert("Error", "Recipe ID is undefined!");
+            return;
+        }
+
         try {
-            if (!recipe.rid) throw new Error("Recipe ID is undefined");
-            await deleteDoc(doc(db, "recipes", recipe.rid));
+            // Firestore document reference to the recipe
+            const recipeRef = doc(db, "recipes", recipe.rid);
+            await deleteDoc(recipeRef);  // Delete document
+            // Clear selected recipe if it was being edited
             if (selectedRecipe?.rid === recipe.rid) cancelEdit();
-            setShowDetailModal(false);
             Alert.alert("Success", "Recipe deleted successfully!");
-        } catch (err) {
-            console.error("Error deleting recipe:", err);
+        } catch (error) {
+            console.error("Error deleting recipe:", error);
             Alert.alert("Error", "Failed to delete recipe");
         }
     };
+
 
     const openAddForm = () => {
         setShowForm(true);
@@ -291,10 +298,11 @@ export const RecipeManagement = () => {
             <Modal
                 visible={showDetailModal}
                 animationType="slide"
-                presentationStyle="pageSheet"
+                presentationStyle="fullScreen"  // change here
                 onRequestClose={() => setShowDetailModal(false)}
             >
-                <SafeAreaView style={styles.detailContainer}>
+
+            <SafeAreaView style={styles.detailContainer}>
                     <View style={styles.detailHeader}>
                         <TouchableOpacity
                             onPress={() => setShowDetailModal(false)}
@@ -721,10 +729,7 @@ const styles = StyleSheet.create({
     detailContent: {
         flex: 1,
     },
-    detailImageSection: {
-        height: 250,
-        backgroundColor: "#F1F5F9",
-    },
+
     detailImage: {
         width: "100%",
         height: "100%",
@@ -934,4 +939,9 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         padding: 2,
     },
+    detailImageSection: {
+        height: 300, // previously 250
+        backgroundColor: "#F1F5F9",
+    },
+
 });
