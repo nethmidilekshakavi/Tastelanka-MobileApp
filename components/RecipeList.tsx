@@ -27,7 +27,6 @@ const ASSET_IMAGES = [
 ];
 
 const { width: screenWidth } = Dimensions.get('window');
-// Adjusted card width calculation for better spacing
 const numColumns = screenWidth > 768 ? 3 : 2;
 const cardMargin = 10;
 const totalMargin = cardMargin * 2 * numColumns + 60; // slightly bigger padding

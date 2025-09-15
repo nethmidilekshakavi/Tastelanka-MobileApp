@@ -9,14 +9,15 @@ import {
     FlatList,
     StyleSheet,
     SafeAreaView,
-    Modal,
+    Modal, Alert,
 } from "react-native";
 import { Search, Bell } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
 import { db } from "@/config/firebaseConfig";
-import { collection, query, orderBy, onSnapshot, where } from "firebase/firestore";
+import {collection, query, orderBy, onSnapshot, where, getDoc, doc} from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import { getAuth } from "firebase/auth";
 
 interface Recipe {
     rid?: string;
@@ -36,6 +37,14 @@ const ASSET_IMAGES = [
     { id: 4, name: "Kokis", source: require("../../assets/images/sweets/kokis.jpg")},
 ];
 
+type UserDoc = {
+    uid: string;
+    fullName?: string;
+    email?: string;
+    role?: string;
+    photoURL?: string | null;
+};
+
 const Home = () => {
     const router = useRouter();
     const navigation = useNavigation();
@@ -44,6 +53,8 @@ const Home = () => {
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
     const [showRecipeDetail, setShowRecipeDetail] = useState(false);
+    const [users, setUsers] = useState<UserDoc[]>([]);
+
 
     const categories = [
         { name: "Rice & Curry", image: "https://i.pinimg.com/736x/27/58/ca/2758ca3713057831e725c6ba5b9d9f4b.jpg" },
@@ -52,6 +63,27 @@ const Home = () => {
         { name: "Sweets & Desserts", image: "https://i.pinimg.com/736x/a9/06/f8/a906f8c16c19085fcc1f974032d72eed.jpg" },
         { name: "Vegetarian & Healthy", image: "https://i.pinimg.com/1200x/c4/3b/5f/c43b5f231abc4a7156ba15afe65e0612.jpg" },
     ];
+
+
+    const [currentUser, setCurrentUser] = useState<UserDoc | null>(null);
+
+    useEffect(() => {
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (user) {
+            const userRef = doc(db, "users", user.uid);
+            getDoc(userRef)
+                .then((snapshot) => {
+                    if (snapshot.exists()) {
+                        setCurrentUser({ uid: snapshot.id, ...(snapshot.data() as UserDoc) });
+                    }
+                })
+                .catch((err) => {
+                    console.error("Error fetching user profile:", err);
+                });
+        }
+    }, []);
 
     useEffect(() => {
         let q;
@@ -297,13 +329,17 @@ const Home = () => {
                     <TouchableOpacity onPress={() => router.push("/(tabs)/Profile")}>
                         <Image
                             source={{
-                                uri: "https://images.unsplash.com/photo-1494790108755-2616c75a3b75?w=40&h=40&fit=crop&crop=face",
+                                uri: currentUser?.photoURL
+                                    ? currentUser.photoURL
+                                    : "https://via.placeholder.com/150/ccc/fff?text=User", // fallback
                             }}
                             style={styles.avatar}
                         />
                     </TouchableOpacity>
                     <View>
-                        <Text style={styles.headerTitle}>Hello, Jenny!</Text>
+                        <Text style={styles.headerTitle}>
+                            Hello, {currentUser?.fullName || "Guest"}!
+                        </Text>
                         <Text style={styles.headerSub}>Welcome to TasteLanka 🇱🇰</Text>
                         <Text style={styles.headerSubtitle}>Check Amazing Recipes</Text>
                     </View>
@@ -315,6 +351,7 @@ const Home = () => {
                     </TouchableOpacity>
                 </View>
             </View>
+
 
             {/* Search Bar */}
             <View style={styles.searchBar}>

@@ -31,9 +31,9 @@ function TabLayout() {
                 }}
             />
             <Tabs.Screen
-                name="About"
+                name="Category"
                 options={{
-                    title: 'About',
+                    title: 'Category',
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="information-circle-outline" size={size} color={color} />
                     ),
