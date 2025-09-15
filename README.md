@@ -1,50 +1,80 @@
-# Welcome to your Expo app 👋
+# 🍲 TasteLanka – Sri Lankan Recipes App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Project Description
+TasteLanka is a mobile application built with **React Native** that provides authentic Sri Lankan recipes. Users can browse recipes, view ingredients, follow step-by-step cooking instructions, filter recipes by category, and mark favorites. Admins can manage recipes, categories, and images via Firebase.
 
-## Get started
+---
 
-1. Install dependencies
+## Features
 
-   ```bash
-   npm install
-   ```
+### User Features
+- **User Authentication**: Register, login, and logout securely via Firebase.
+- **Browse Recipes**: View recipes by category (Traditional, Street Food, Seafood, Desserts).
+- **Recipe Details**: Ingredients, step-by-step instructions, serving suggestions in English & Sinhala.
+- **Favorites**: Save recipes for quick access.
+- **Search & Filter**: Search recipes by name or category.
 
-2. Start the app
+### Admin Features
+- **Recipe Management**: Add, update, and remove recipes.
+- **Category Management**: Add or remove recipe categories.
+- **Image Uploads**: Upload images via Firebase Storage.
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## Technologies Used
+- **Frontend**: React Native, Expo, TypeScript
+- **Backend**: Firebase Firestore
+- **Authentication**: Firebase Authentication
+- **Storage**: Firebase Storage
+- **State Management**: React Hooks, Context API
+- **UI Components**: Tailwind CSS (`tailwind-rn`), Lucide React Native Icons
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Screenshots
 
-## Get a fresh project
+### Home Page
+![Home Page](src/screenshots/home.png)
 
-When you're ready, run:
+### Recipe Details
+![Recipe Details](src/screenshots/recipe.png)
 
-```bash
-npm run reset-project
-```
+### Categories Page
+![Categories](src/screenshots/categories.png)
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Admin Panel
+![Admin Panel](src/screenshots/admin.png)
 
-## Learn more
+---
 
-To learn more about developing your project with Expo, look at the following resources:
+## Demonstration Video
+Watch the full demonstration here: [YouTube Demo](https://www.youtube.com/watch?v=your-demo-link)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+---
 
-## Join the community
+## APK / Build
+Download APK: [TasteLanka APK](https://your-cloud-link.com/tastelanka.apk)
 
-Join our community of developers creating universal apps.
+---
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## Future Improvements
+
+- Add push notifications for new recipes and featured dishes.
+- Implement offline access for saved recipes.
+- Add a rating and review system for recipes.
+- Support multi-language beyond English and Sinhala.
+- Enable social sharing for recipes on platforms like Facebook and WhatsApp.
+- Advanced search and filter by category, ingredients, and cooking time.
+
+---
+
+## Acknowledgments
+
+Special thanks to mentors, lecturers, and contributors who guided and supported the development of TasteLanka.  
+Thanks to the Sri Lankan culinary community for inspiration and authentic recipe contributions.

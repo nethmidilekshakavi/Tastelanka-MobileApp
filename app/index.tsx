@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   getStartedButton: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#4CAF50',
     paddingHorizontal: 40,
     paddingVertical: 18,
     borderRadius: 30,
