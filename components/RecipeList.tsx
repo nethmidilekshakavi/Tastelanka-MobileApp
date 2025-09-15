@@ -22,9 +22,15 @@ import { Picker } from '@react-native-picker/picker';
 import {Category} from "@/types/Category";
 
 const ASSET_IMAGES = [
-    { id: 1, name: "Rice & Curry", source: require("../assets/images/fac132dbf73ecd95071f6da669ce7f15.jpg") },
-    { id: 2, name: "Milk Rice", source: require("../assets/images/rice & curry/kribath.jpg") },
+    { id: 1, name: "Milk Rice", source: require("../assets/images/rice & curry/kribath.jpg") },
+    { id: 2, name: "Polos Curry", source: require("../assets/images/rice & curry/polos.jpg") },
+    { id: 3, name: "Kokis", source: require("../assets/images/sweets/kokis.jpg")},
+    { id: 4, name: "chiken", source: require("../assets/images/meet/b9bbb6d8962047236122c4f46d8ca0e4.jpg")},
+    { id: 5, name: "issowade", source: require("../assets/images/streetFoods/issiwade.jpg")},
+    { id: 6, name: "kalupol", source: require("../assets/images/vegr/04086f9f2b47ae7357f33cb802b534bc.jpg")},
+    { id: 7, name: "cutlut", source: require("../assets/images/streetFoods/56711cde3cf86f455aa5d2ae59c5f5c8.jpg")},
 ];
+
 
 const { width: screenWidth } = Dimensions.get('window');
 const numColumns = screenWidth > 768 ? 3 : 2;

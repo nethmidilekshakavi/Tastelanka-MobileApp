@@ -19,8 +19,6 @@ import { collection, query, orderBy, onSnapshot, where, getDoc, doc } from "fire
 import Icon from "react-native-vector-icons/MaterialIcons";
 import {getAuth} from "firebase/auth";
 
-
-
 interface Recipe {
     rid?: string;
     title: string;
@@ -33,10 +31,15 @@ interface Recipe {
 }
 
 const ASSET_IMAGES = [
-    { id: 1, name: "Rice & Curry", source: require("../../assets/images/rice & curry/kribath.jpg") },
-    { id: 2, name: "Milk Rice", source: require("../../assets/images/rice & curry/kribath.jpg") },
-    { id: 3, name: "Polos Curry", source: require("../../assets/images/rice & curry/polos.jpg") },
-    { id: 4, name: "Kokis", source: require("../../assets/images/sweets/kokis.jpg")},
+    { id: 1, name: "Milk Rice", source: require("../../assets/images/rice & curry/kribath.jpg") },
+    { id: 2, name: "Polos Curry", source: require("../../assets/images/rice & curry/polos.jpg") },
+    { id: 3, name: "Kokis", source: require("../../assets/images/sweets/kokis.jpg")},
+    { id: 4, name: "chiken", source: require("../../assets/images/meet/b9bbb6d8962047236122c4f46d8ca0e4.jpg")},
+    { id: 5, name: "issowade", source: require("../../assets/images/streetFoods/issiwade.jpg")},
+    { id: 6, name: "kalupol", source: require("../../assets/images/vegr/04086f9f2b47ae7357f33cb802b534bc.jpg")},
+    { id: 7, name: "cutlut", source: require("../../assets/images/streetFoods/56711cde3cf86f455aa5d2ae59c5f5c8.jpg")},
+
+
 ];
 
 type UserDoc = {
@@ -60,10 +63,10 @@ const Home = () => {
 
     const categories = [
         { name: "Rice & Curry", image: "https://i.pinimg.com/736x/27/58/ca/2758ca3713057831e725c6ba5b9d9f4b.jpg" },
-        { name: "Snacks & Street Food", image: "https://i.pinimg.com/1200x/9c/85/f0/9c85f0d4e0e27df0567c6ff7a9a9f5a0.jpg" },
-        { name: "Seafood & Meat", image: "https://i.pinimg.com/1200x/c1/07/94/c107947d0872bf34e97a6799afc70d88.jpg" },
+        { name: "Snacks & Street Food", image: "https://i.pinimg.com/1200x/50/9d/0f/509d0f89c71b4154db31e563872751e0.jpg" },
+        { name: "Seafood & Meat", image: "https://i.pinimg.com/736x/79/9c/25/799c25ee0f46f6dd328ebb9ea8396bd4.jpg" },
         { name: "Sweets & Desserts", image: "https://i.pinimg.com/736x/a9/06/f8/a906f8c16c19085fcc1f974032d72eed.jpg" },
-        { name: "Vegetarian & Healthy", image: "https://i.pinimg.com/1200x/c4/3b/5f/c43b5f231abc4a7156ba15afe65e0612.jpg" },
+        { name: "Vegetarian & Healthy", image: "https://i.pinimg.com/1200x/f0/7c/5a/f07c5a46b6a3072e36a457b495bb827b.jpg" },
     ];
 
 
