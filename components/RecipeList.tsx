@@ -24,15 +24,14 @@ import {Category} from "@/types/Category";
 const ASSET_IMAGES = [
     { id: 1, name: "Rice & Curry", source: require("../assets/images/fac132dbf73ecd95071f6da669ce7f15.jpg") },
     { id: 2, name: "Milk Rice", source: require("../assets/images/rice & curry/kribath.jpg") },
-    { id: 3, name: "Polos Curry", source: require("../assets/images/rice & curry/polos.jpg") },
-    { id: 4, name: "Kokis", source: require("../assets/images/sweets/kokis.jpg") },
 ];
 
 const { width: screenWidth } = Dimensions.get('window');
+// Adjusted card width calculation for better spacing
 const numColumns = screenWidth > 768 ? 3 : 2;
 const cardMargin = 10;
-const totalMargin = cardMargin * 2 * numColumns + 60;
-const cardWidth = 300;
+const totalMargin = cardMargin * 2 * numColumns + 60; // slightly bigger padding
+const cardWidth = 360; // fixed width 60px
 
 
 export const RecipeManagement = () => {
@@ -369,15 +368,6 @@ export const RecipeManagement = () => {
                     <ScrollView style={styles.detailContent} showsVerticalScrollIndicator={false}>
                         {detailRecipe && (
                             <>
-                                <Image source={getRecipeImageSource(detailRecipe)} style={styles.detailImage} />
-                                <Text>{detailRecipe.title}</Text>
-                                <Text>{detailRecipe.description}</Text>
-                                <Text>{detailRecipe.ingredients}</Text>
-                                <Text>{detailRecipe.instructions}</Text>
-                            </>
-                        )}
-
-                        <>
                                 <View style={styles.detailImageSection}>
                                     {getRecipeImageSource(detailRecipe) ? (
                                         <Image
