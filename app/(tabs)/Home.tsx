@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
     searchInput: { flex: 1, fontSize: 16, color: "#1F2937" },
     sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
     sectionTitle: { fontSize: 18, fontWeight: "bold", color: "#1F2937" },
-    linkText: { color: "#F97316", fontSize: 14, fontWeight: "600" },
+    linkText: { color: "#4CAF50", fontSize: 14, fontWeight: "600" },
     categoryCard: { width: 120, height: 80, borderRadius: 12, overflow: "hidden", marginRight: 16 },
     categoryImage: { width: "100%", height: "100%" },
     categoryOverlay: {
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
     viewButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: "#EEF2FF", borderRadius: 8 },
     viewButtonText: { color: "#3B82F6", fontSize: 12, fontWeight: "600" },
     list: { paddingBottom: 20 },
-    header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 16, backgroundColor: "#4CAF50", borderBottomLeftRadius: 20, borderBottomRightRadius: 20 },
+    header: {height:150, flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 16, backgroundColor: "#4CAF50", borderBottomLeftRadius: 20, borderBottomRightRadius: 20,top:30 },
     headerLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
     avatar: { width: 50, height: 50, borderRadius: 25 },
     headerTitle: { fontSize: 20, fontWeight: "bold", color: "#fff" },
@@ -499,9 +499,18 @@ const styles = StyleSheet.create({
 
     // Recipe Detail Styles
     detailContainer: { flex: 1, backgroundColor: "#F8FAFC" },
-    detailHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 16, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#E5E7EB" },
     backButton: { padding: 8, borderRadius: 8, backgroundColor: "#F3F4F6" },
     detailHeaderTitle: { fontSize: 18, fontWeight: "600", color: "#374151" },
+    detailHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: 16,
+        paddingTop: 36, // 16 + 20px top extra
+        backgroundColor: "#fff",
+        borderBottomWidth: 1,
+        borderBottomColor: "#E5E7EB"
+    },
     detailContent: { flex: 1 },
     detailImageContainer: { position: "relative", height: 250 },
     detailImage: { width: "100%", height: "100%" },
