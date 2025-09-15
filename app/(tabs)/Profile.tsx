@@ -224,7 +224,7 @@ const Profile = () => {
                 behavior={Platform.OS === "ios" ? "padding" : undefined}
                 style={{ flex: 1 }}
             >
-                <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+                <ScrollView contentContainerStyle={{ paddingBottom: 40 ,top:30}}>
                     {/* Profile Section */}
                     <View style={styles.profileSection}>
                         <View style={styles.profileImageContainer}>

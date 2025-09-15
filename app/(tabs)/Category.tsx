@@ -239,7 +239,7 @@ const CategoryPage = () => {
 export default CategoryPage;
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#F8FAFC" },
+    container: { flex: 1, backgroundColor: "#F8FAFC",top:30, },
     sectionTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
     categoryCard: { width: "100%", height: 120, borderRadius: 12, overflow: "hidden", marginBottom: 15 },
     categoryImage: { width: "100%", height: "100%" },

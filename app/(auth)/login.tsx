@@ -8,46 +8,34 @@ import {
     ActivityIndicator,
     Image,
     ImageBackground,
-    StatusBar,
-    Dimensions,
-    ScrollView,
-    KeyboardAvoidingView,
-    Platform,
 } from "react-native";
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import { login } from "@/services/authService";
-import { Video } from "expo-av";
-import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from '@expo/vector-icons';
-import { getDoc, doc } from "firebase/firestore";
-import { db } from "@/config/firebaseConfig";
+import { Video } from "expo-av"; // <-- import Video from expo-av
 // @ts-ignore
 import videoFile from "../../assets/vidios/PinDown.io_@kamkumarasinghe_1756743322.mp4";
+import {getDoc} from "@firebase/firestore";
+import {doc} from "firebase/firestore";
+import {db} from "@/config/firebaseConfig";
+import image from "../../assets/images/fac132dbf73ecd95071f6da669ce7f15.jpg";
 
-const { width, height } = Dimensions.get('window');
 
 const LoginScreen = () => {
     const router = useRouter();
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const [isEmailFocused, setIsEmailFocused] = useState(false);
-    const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+    const [email, setEmail] = useState<string>("");
+    const [password, setPassword] = useState<string>("");
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const handleLogin = async () => {
         if (isLoading) return;
-
-        if (!email || !password) {
-            Alert.alert("Missing Information", "Please fill in all fields");
-            return;
-        }
-
         setIsLoading(true);
 
         try {
-            const user = await login(email, password);
+            const user = await login(email, password); // Firebase auth login
+            console.log("Login success:", user);
+
+            // firestore users collection එකෙන් role එක ගන්න
             const userDoc = await getDoc(doc(db, "users", user.uid));
             const userData = userDoc.data();
 
@@ -56,133 +44,138 @@ const LoginScreen = () => {
             } else {
                 router.push("/(tabs)/Home");
             }
+
         } catch (err) {
             console.error(err);
-            Alert.alert("Login Failed", "Invalid email or password. Please try again.");
+            Alert.alert("Login failed", "Something went wrong");
         } finally {
             setIsLoading(false);
         }
     };
 
-    return (
-        <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-            <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-            <ScrollView
-                style={{ flex: 1 }}
-                showsVerticalScrollIndicator={false}
-                bounces={false}
-            >
-                {/* Hero Section */}
-                <View style={{ height: 380 }}>
-                    <ImageBackground
-                        source={{ uri: "https://i.pinimg.com/736x/d6/43/a5/d643a50abced773f9d2c543f9a3a9b56.jpg" }}
-                        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-                        resizeMode="cover"
-                    >
-                        <LinearGradient
-                            colors={['rgba(0,0,0,0.3)', 'rgba(34, 197, 94, 0.4)', 'rgba(0,0,0,0.6)']}
-                        />
 
-                        {/* Logo */}
-                        <View style={{ alignItems: "center", zIndex: 10 }}>
-                            <View style={{ width: 80, height: 80, backgroundColor: "white", borderRadius: 40, justifyContent: "center", alignItems: "center", marginBottom: 12 }}>
-                                <Ionicons name="restaurant" size={32} color="#22c55e" />
-                            </View>
-                            <Text style={{ color: "white", fontSize: 36, fontWeight: "bold", textAlign: "center" }}>Welcome Back</Text>
-                            <Text style={{ color: "white", fontSize: 36, fontWeight: "800", textAlign: "center" }}>TasteLanka</Text>
-                            <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
-                                <View style={{ width: 32, height: 1, backgroundColor: "#22c55e", marginRight: 8 }} />
-                                <Text style={{ color: "#BBF7D0", fontSize: 18, fontWeight: "500" }}>SIGN IN</Text>
-                                <View style={{ width: 32, height: 1, backgroundColor: "#22c55e", marginLeft: 8 }} />
-                            </View>
-                        </View>
-                    </ImageBackground>
+    return (
+        <View className="flex-1 bg-gradient-to-br from-green-100 to-green-50">
+            {/* Top curved section with image */}
+            <View className="relative">
+                <ImageBackground
+                    source={{
+                        uri: "https://i.pinimg.com/1200x/c8/11/e1/c811e16e296b7830943b90943a3d5c51.jpg",
+                    }}
+                    className="h-80 rounded-b-[50px] justify-center items-center overflow-hidden"
+                    resizeMode="cover"
+                >
+                    <View className="absolute inset-0 opacity-50" />
+                    <View className="absolute top-10 right-10 w-32 h-32 bg-green-400 rounded-full opacity-20" />
+                    <View className="absolute top-20 left-5 w-20 h-20 bg-green-600 rounded-full opacity-30" />
+                    <Text className="text-white text-3xl font-bold mb-2">
+                        Welcome Back TasteLanka !
+                    </Text>
+                    <Text className="text-green-100 text-lg">SIGN IN</Text>
+                </ImageBackground>
+            </View>
+
+            {/* Bottom white section with form */}
+            <View className="flex-1 bg-white mx-6 -mt-10 rounded-t-[30px] px-6 pt-10 shadow-lg">
+                {/* Email Input */}
+                <View className="mb-6">
+                    <TextInput
+                        placeholder="Email"
+                        className="bg-gray-50 border border-gray-200 rounded-2xl px-6 py-4 text-gray-800 text-lg"
+                        placeholderTextColor="#9CA3AF"
+                        value={email}
+                        onChangeText={setEmail}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                    />
                 </View>
 
-                {/* Form */}
-                <View style={{ flex: 1, backgroundColor: "white", marginHorizontal: 16, marginTop: -32, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, shadowColor: "#000", shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 }}>
-                    {/* Email Input */}
-                    <View style={{ marginBottom: 16 }}>
-                        <Text style={{ fontSize: 14, fontWeight: "500", marginBottom: 4 }}>Email Address</Text>
-                        <View style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            borderWidth: 2,
-                            borderColor: isEmailFocused ? "#22c55e" : "#E5E7EB",
-                            borderRadius: 16,
-                            paddingHorizontal: 12
-                        }}>
-                            <Ionicons name="mail-outline" size={20} color={isEmailFocused ? "#22c55e" : "#9CA3AF"} />
-                            <TextInput
-                                placeholder="Enter your email"
-                                style={{ flex: 1, marginLeft: 8, paddingVertical: 12, color: "#111827" }}
-                                value={email}
-                                onChangeText={setEmail}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                                onFocus={() => setIsEmailFocused(true)}
-                                onBlur={() => setIsEmailFocused(false)}
-                            />
-                        </View>
-                    </View>
+                {/* Password Input */}
+                <View className="mb-8">
+                    <TextInput
+                        placeholder="Password"
+                        className="bg-gray-50 border border-gray-200 rounded-2xl px-6 py-4 text-gray-800 text-lg"
+                        placeholderTextColor="#9CA3AF"
+                        secureTextEntry
+                        value={password}
+                        onChangeText={setPassword}
+                    />
+                </View>
 
-                    {/* Password Input */}
-                    <View style={{ marginBottom: 16 }}>
-                        <Text style={{ fontSize: 14, fontWeight: "500", marginBottom: 4 }}>Password</Text>
-                        <View style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            borderWidth: 2,
-                            borderColor: isPasswordFocused ? "#22c55e" : "#E5E7EB",
-                            borderRadius: 16,
-                            paddingHorizontal: 12
-                        }}>
-                            <Ionicons name="lock-closed-outline" size={20} color={isPasswordFocused ? "#22c55e" : "#9CA3AF"} />
-                            <TextInput
-                                placeholder="Enter your password"
-                                style={{ flex: 1, marginLeft: 8, paddingVertical: 12, color: "#111827" }}
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry={!showPassword}
-                                onFocus={() => setIsPasswordFocused(true)}
-                                onBlur={() => setIsPasswordFocused(false)}
-                            />
-                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                                <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#9CA3AF" />
-                            </TouchableOpacity>
-                        </View>
-                    </View>
+                {/* Login Button */}
+                <TouchableOpacity
+                    className="bg-green-500 py-4 rounded-2xl mb-6 shadow-md"
+                    onPress={handleLogin}
+                    disabled={isLoading}
+                >
+                    {isLoading ? (
+                        <ActivityIndicator color="#fff" size="large" />
+                    ) : (
+                        <Text className="text-center text-xl text-white font-semibold">
+                            LOGIN
+                        </Text>
+                    )}
+                </TouchableOpacity>
 
-                    {/* Login Button */}
-                    <TouchableOpacity
-                        onPress={handleLogin}
-                        disabled={isLoading}
-                        style={{
-                            borderRadius: 16,
-                            overflow: "hidden",
-                            marginVertical: 16,
-                            opacity: isLoading ? 0.7 : 1
-                        }}
-                    >
-                        <LinearGradient
-                            colors={['#22c55e', '#16a34a', '#15803d']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={{ paddingVertical: 14, justifyContent: "center", alignItems: "center", borderRadius: 16 }}
-                        >
-                            {isLoading ? (
-                                <ActivityIndicator color="#fff" size="small" />
-                            ) : (
-                                <Text style={{ color: "white", fontSize: 16, fontWeight: "600" }}>SIGN IN</Text>
-                            )}
-                        </LinearGradient>
+                {/* Social Media Buttons */}
+                <View className="flex-row justify-center space-x-4 mb-8">
+                    <TouchableOpacity className="w-12 h-12 rounded-full justify-center items-center bg-gray-100">
+                        <Image
+                            source={{
+                                uri: "https://i.pinimg.com/736x/7b/ed/39/7bed398644d61cae7c4dd853b558a1c9.jpg",
+                            }}
+                            className="w-6 h-6"
+                            resizeMode="contain"
+                        />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity className="w-12 h-12 rounded-full justify-center items-center bg-gray-100">
+                        <Image
+                            source={{
+                                uri: "https://i.pinimg.com/736x/d9/7b/bb/d97bbb08017ac2309307f0822e63d082.jpg",
+                            }}
+                            className="w-6 h-6"
+                            resizeMode="contain"
+                        />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity className="w-12 h-12 rounded-full justify-center items-center bg-gray-100">
+                        <Image
+                            source={{
+                                uri: "https://i.pinimg.com/736x/b5/66/fa/b566fa1473df5b662b54babb764a46f2.jpg",
+                            }}
+                            className="w-6 h-6"
+                            resizeMode="contain"
+                        />
                     </TouchableOpacity>
                 </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+
+                {/* Register Link */}
+                <Pressable
+                    onPress={() => router.push("/register")}
+                    className="items-center"
+                >
+                    <Text className="text-gray-600 text-base">
+                        Don't have an account?{" "}
+                        <Text className="text-green-500 font-semibold">Register</Text>
+                    </Text>
+                </Pressable>
+
+                 Video
+                {/*<View className="mt-4 w-full h-48">*/}
+                {/*    <Video*/}
+                {/*        source={videoFile}      // use local video*/}
+                {/*        style={{ width: "100%", height: 230,  borderRadius: 12 }}*/}
+                {/*        useNativeControls*/}
+                {/*        resizeMode="cover"*/}
+                {/*        isLooping*/}
+                {/*        shouldPlay              // auto play*/}
+                {/*    />*/}
+
+                {/*</View>*/}
+
+            </View>
+        </View>
     );
 };
 

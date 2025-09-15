@@ -33,17 +33,24 @@ TasteLanka is a mobile application built with **React Native** that provides aut
 
 ## Screenshots
 
+### Welcome Page
+![Welcome Page](screenshots/welcome.png)
+
+### Login Page
+![Login Page](screenshots/login2.jpg)
+
 ### Home Page
-![Home Page](src/screenshots/home.png)
+![Home Page](screenshots/home.jpg)
 
 ### Recipe Details
-![Recipe Details](src/screenshots/recipe.png)
+![Recipe Details](screenshots/recipedetails.jpg)
 
 ### Categories Page
-![Categories](src/screenshots/categories.png)
+![Categories](screenshots/category.jpg)
 
 ### Admin Panel
-![Admin Panel](src/screenshots/admin.png)
+![Admin Panel](screenshots/admin1.png)
+![Admin Panel](screenshots/admin2.png)
 
 ---
 
