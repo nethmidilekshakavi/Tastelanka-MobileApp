@@ -52,9 +52,9 @@ const LoginScreen = () => {
             <View className="relative h-96">
                 <ImageBackground
                     source={{
-                        uri: "https://i.pinimg.com/736x/af/0b/d2/af0bd27a3dce861d0dc32c06dab2b2cb.jpg",
+                        uri: "https://i.pinimg.com/1200x/24/b5/f5/24b5f5ecd1b11aed22b4b5602c2d4a0a.jpg",
                     }}
-                    style={{ flex: 1 }}
+                    style={{ flex: 1 , top:30 }}
                     resizeMode="cover"
                 >
                     {/* Decorative curved shapes */}
@@ -85,10 +85,7 @@ const LoginScreen = () => {
             </View>
 
             {/* Form section */}
-            <View className="flex-1 px-8 -mt-4">
-
-
-
+            <View className="flex-1 px-8 -mt-4 top-20">
 
                 {/* Email Input */}
                 <View className="mb-6">
