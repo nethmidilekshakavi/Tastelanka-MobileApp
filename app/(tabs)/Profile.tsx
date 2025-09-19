@@ -15,25 +15,24 @@ import {
 } from "react-native";
 
 import * as ImagePicker from "expo-image-picker";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth, db } from "@/config/firebaseConfig";
-import {
-    doc,
-    getDoc,
-    updateDoc,
-} from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import {
     updatePassword as updateAuthPassword,
     EmailAuthProvider,
     reauthenticateWithCredential,
+    updateProfile,
 } from "firebase/auth";
 
+const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/davhloffd/image/upload";
+const UPLOAD_PRESET = "my_upload_preset";
 const DEFAULT_PROFILE_PIC =
     "https://via.placeholder.com/150/ccc/fff?text=User";
 
 const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [userInfo, setUserInfo] = useState({
         fullName: "",
         email: "",
@@ -77,7 +76,6 @@ const Profile = () => {
                     setFullName(profileData.fullName);
                     setEmail(profileData.email);
                 } else {
-                    // fallback to auth user
                     const profileData = {
                         fullName: user.displayName || "",
                         email: user.email || "",
@@ -99,6 +97,7 @@ const Profile = () => {
         loadUserProfile();
     }, []);
 
+    // ✅ Pick and upload image to Cloudinary
     const handlePickImage = async () => {
         try {
             const { status } =
@@ -118,34 +117,48 @@ const Profile = () => {
                 quality: 0.8,
             });
 
-            if (!result.canceled) {
-                const user = auth.currentUser;
-                if (!user) return;
-
+            if (!result.canceled && result.assets && result.assets.length > 0) {
                 const imageUri = result.assets[0].uri;
-                const storage = getStorage();
-                const storageRef = ref(storage, `profilePictures/${user.uid}.jpg`);
+                const user = auth.currentUser;
 
-                const response = await fetch(imageUri);
-                const blob = await response.blob();
+                if (!user) {
+                    Alert.alert("Error", "No user logged in");
+                    return;
+                }
 
-                await uploadBytes(storageRef, blob);
-                const downloadURL = await getDownloadURL(storageRef);
+                setUploading(true);
 
-                // update Firestore
+                // Upload to Cloudinary
+                const data = new FormData();
+                data.append("file", {
+                    uri: imageUri,
+                    type: "image/jpeg",
+                    name: "profile.jpg",
+                } as any);
+                data.append("upload_preset", UPLOAD_PRESET);
+
+                const res = await fetch(CLOUDINARY_URL, { method: "POST", body: data });
+                const file = await res.json();
+
+                if (!file.secure_url) throw new Error("Upload failed");
+
+                // Update Firestore & Auth
                 const userRef = doc(db, "users", user.uid);
-                await updateDoc(userRef, { photoURL: downloadURL });
+                await updateDoc(userRef, { photoURL: file.secure_url });
+                await updateProfile(user, { photoURL: file.secure_url });
 
-                setUserInfo((prev) => ({ ...prev, photoURL: downloadURL }));
-
+                setUserInfo((prev) => ({ ...prev, photoURL: file.secure_url }));
                 Alert.alert("Success", "Profile picture updated!");
             }
-        } catch (err) {
-            console.error("Image upload error:", err);
-            Alert.alert("Error", "Failed to update profile picture");
+        } catch (err: any) {
+            console.error("Image pick error:", err);
+            Alert.alert("Error", err.message || "Failed to update profile picture");
+        } finally {
+            setUploading(false);
         }
     };
 
+    // ✅ Save Profile + Password
     const handleSaveChanges = async () => {
         const user = auth.currentUser;
         if (!user) {
@@ -167,7 +180,8 @@ const Profile = () => {
                 updatedAt: new Date(),
             });
 
-            // update password if provided
+            await updateProfile(user, { displayName: fullName.trim() });
+
             if (newPassword && currentPassword) {
                 try {
                     const credential = EmailAuthProvider.credential(
@@ -224,7 +238,7 @@ const Profile = () => {
                 behavior={Platform.OS === "ios" ? "padding" : undefined}
                 style={{ flex: 1 }}
             >
-                <ScrollView contentContainerStyle={{ paddingBottom: 40 ,top:30}}>
+                <ScrollView contentContainerStyle={{ paddingBottom: 40, top: 30 }}>
                     {/* Profile Section */}
                     <View style={styles.profileSection}>
                         <View style={styles.profileImageContainer}>
@@ -236,7 +250,11 @@ const Profile = () => {
                                 style={styles.editImageButton}
                                 onPress={handlePickImage}
                             >
-                                <Text style={styles.editImageIcon}>✏️</Text>
+                                {uploading ? (
+                                    <ActivityIndicator color="#fff" />
+                                ) : (
+                                    <Text style={styles.editImageIcon}>✏️</Text>
+                                )}
                             </TouchableOpacity>
                         </View>
                         <Text style={styles.profileName}>
@@ -247,7 +265,6 @@ const Profile = () => {
 
                     {/* Form Section */}
                     <View style={styles.formSection}>
-                        {/* Full Name */}
                         <View style={styles.inputGroup}>
                             <Text style={styles.inputLabel}>Full Name</Text>
                             <TextInput
@@ -258,7 +275,6 @@ const Profile = () => {
                             />
                         </View>
 
-                        {/* Email */}
                         <View style={styles.inputGroup}>
                             <Text style={styles.inputLabel}>Email</Text>
                             <TextInput
@@ -270,7 +286,6 @@ const Profile = () => {
                             />
                         </View>
 
-                        {/* Current Password */}
                         <View style={styles.inputGroup}>
                             <Text style={styles.inputLabel}>Current Password</Text>
                             <TextInput
@@ -282,7 +297,6 @@ const Profile = () => {
                             />
                         </View>
 
-                        {/* New Password */}
                         <View style={styles.inputGroup}>
                             <Text style={styles.inputLabel}>New Password</Text>
                             <TextInput
@@ -298,7 +312,6 @@ const Profile = () => {
                         </View>
                     </View>
 
-                    {/* Save Button */}
                     <View style={styles.buttonSection}>
                         <TouchableOpacity
                             style={[styles.saveButton, saving && styles.saveButtonDisabled]}
@@ -320,14 +333,9 @@ const Profile = () => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: "#F9FAFB" },
-
-    // Loading
     loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
     loadingText: { marginTop: 12, fontSize: 16, color: "#6B7280" },
-
-    // Profile
     profileSection: {
-
         alignItems: "center",
         paddingVertical: 30,
         backgroundColor: "#fff",
@@ -335,7 +343,6 @@ const styles = StyleSheet.create({
     },
     profileImageContainer: { position: "relative", marginBottom: 12 },
     profileImage: {
-
         width: 120,
         height: 120,
         borderRadius: 60,
@@ -353,8 +360,6 @@ const styles = StyleSheet.create({
     editImageIcon: { color: "white", fontSize: 14 },
     profileName: { fontSize: 22, fontWeight: "600", marginTop: 10 },
     profileJoinDate: { fontSize: 14, color: "#6B7280" },
-
-    // Form
     formSection: { backgroundColor: "#fff", padding: 20 },
     inputGroup: { marginBottom: 20 },
     inputLabel: { fontSize: 14, fontWeight: "600", marginBottom: 6 },
@@ -367,8 +372,6 @@ const styles = StyleSheet.create({
         color: "#111827",
     },
     inputHelper: { fontSize: 12, color: "#6B7280", marginTop: 4 },
-
-    // Button
     buttonSection: { padding: 20 },
     saveButton: {
         backgroundColor: "#10B981",

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, createContext } from "react";
 import {
     View,
     Text,
@@ -17,7 +17,7 @@ import { useNavigation } from "@react-navigation/native";
 import { db } from "@/config/firebaseConfig";
 import { collection, query, orderBy, onSnapshot, where, getDoc, doc } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import {getAuth} from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 interface Recipe {
     rid?: string;
@@ -30,16 +30,22 @@ interface Recipe {
     instructions?: string;
 }
 
+interface User {
+    uid: string;
+    fullName?: string;
+    email?: string;
+    role?: string;
+    profilePic?: string | null;
+}
+
 const ASSET_IMAGES = [
     { id: 1, name: "Milk Rice", source: require("../../assets/images/rice & curry/kribath.jpg") },
     { id: 2, name: "Polos Curry", source: require("../../assets/images/rice & curry/polos.jpg") },
-    { id: 3, name: "Kokis", source: require("../../assets/images/sweets/kokis.jpg")},
-    { id: 4, name: "chiken", source: require("../../assets/images/meet/b9bbb6d8962047236122c4f46d8ca0e4.jpg")},
-    { id: 5, name: "issowade", source: require("../../assets/images/streetFoods/issiwade.jpg")},
-    { id: 6, name: "kalupol", source: require("../../assets/images/vegr/04086f9f2b47ae7357f33cb802b534bc.jpg")},
-    { id: 7, name: "cutlut", source: require("../../assets/images/streetFoods/56711cde3cf86f455aa5d2ae59c5f5c8.jpg")},
-
-
+    { id: 3, name: "Kokis", source: require("../../assets/images/sweets/kokis.jpg") },
+    { id: 4, name: "chiken", source: require("../../assets/images/meet/b9bbb6d8962047236122c4f46d8ca0e4.jpg") },
+    { id: 5, name: "issowade", source: require("../../assets/images/streetFoods/issiwade.jpg") },
+    { id: 6, name: "kalupol", source: require("../../assets/images/vegr/04086f9f2b47ae7357f33cb802b534bc.jpg") },
+    { id: 7, name: "cutlut", source: require("../../assets/images/streetFoods/56711cde3cf86f455aa5d2ae59c5f5c8.jpg") },
 ];
 
 type UserDoc = {
@@ -50,6 +56,14 @@ type UserDoc = {
     photoURL?: string | null;
 };
 
+interface AuthContextType {
+    user: User | null;
+    login: (user: User) => void;
+    logout: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
 const Home = () => {
     const router = useRouter();
     const navigation = useNavigation();
@@ -58,8 +72,7 @@ const Home = () => {
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
     const [showRecipeDetail, setShowRecipeDetail] = useState(false);
-    const [users, setUsers] = useState<UserDoc[]>([]);
-
+    const [currentUser, setCurrentUser] = useState<UserDoc | null>(null);
 
     const categories = [
         { name: "Rice & Curry", image: "https://i.pinimg.com/736x/27/58/ca/2758ca3713057831e725c6ba5b9d9f4b.jpg" },
@@ -69,25 +82,24 @@ const Home = () => {
         { name: "Vegetarian & Healthy", image: "https://i.pinimg.com/1200x/f0/7c/5a/f07c5a46b6a3072e36a457b495bb827b.jpg" },
     ];
 
-
-    const [currentUser, setCurrentUser] = useState<UserDoc | null>(null);
-
     useEffect(() => {
         const auth = getAuth();
-        const user = auth.currentUser;
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const userRef = doc(db, "users", user.uid);
+                getDoc(userRef)
+                    .then((snapshot) => {
+                        if (snapshot.exists()) {
+                            setCurrentUser({ uid: snapshot.id, ...(snapshot.data() as UserDoc) });
+                        }
+                    })
+                    .catch((err) => {
+                        console.error("Error fetching user profile:", err);
+                    });
+            }
+        });
 
-        if (user) {
-            const userRef = doc(db, "users", user.uid);
-            getDoc(userRef)
-                .then((snapshot) => {
-                    if (snapshot.exists()) {
-                        setCurrentUser({ uid: snapshot.id, ...(snapshot.data() as UserDoc) });
-                    }
-                })
-                .catch((err) => {
-                    console.error("Error fetching user profile:", err);
-                });
-        }
+        return () => unsubscribe();
     }, []);
 
     useEffect(() => {
@@ -113,10 +125,10 @@ const Home = () => {
     const getRecipeImageSource = (recipe: Recipe) => {
         if (recipe.imageId) {
             const image = ASSET_IMAGES.find(img => img.id === recipe.imageId);
-            return image ? { source: image.source, isLocal: true } : null;
+            return image ? { source: image.source } : null;
         }
         if (recipe.imageUrl) {
-            return { source: { uri: recipe.imageUrl }, isLocal: false };
+            return { source: { uri: recipe.imageUrl } };
         }
         return null;
     };
@@ -330,43 +342,32 @@ const Home = () => {
         <SafeAreaView style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                {/* Left: Avatar + Greetings */}
                 <View style={styles.headerLeft}>
-                    <TouchableOpacity onPress={() => router.push("/(tabs)/Profile")}>
+                    <TouchableOpacity>
                         <Image
-                            source={{
-                                uri: currentUser?.photoURL
-                                    ? currentUser.photoURL
-                                    : "https://via.placeholder.com/150/ccc/fff?text=User",
-                            }}
+                            source={{ uri: currentUser?.photoURL || "https://via.placeholder.com/150" }}
                             style={styles.avatar}
                         />
                     </TouchableOpacity>
                     <View style={{ marginLeft: 12 }}>
-                        <Text style={styles.headerTitle}>
-                            Hello, {currentUser?.fullName || "Guest"}!
-                        </Text>
-                        <Text style={styles.headerSub}>Welcome to TasteLanka 🇱🇰</Text>
-                        <Text style={styles.headerSubtitle}>Check Amazing Recipes</Text>
+                        <Text style={styles.headerTitle}>Hello, {currentUser?.fullName || "Guest"}!</Text>
+                        <Text style={styles.headerSubtitle}>Welcome to TasteLanka 🇱🇰</Text>
                     </View>
                 </View>
 
                 {/* Right: Bell + Message Icons */}
                 <View style={styles.headerRight}>
-                    {/* Notification Bell */}
                     <TouchableOpacity style={styles.iconButton}>
                         <Bell size={24} color="white" />
                         <View style={styles.notificationDot} />
                     </TouchableOpacity>
 
-                    {/* Message Icon */}
                     <TouchableOpacity style={styles.iconButton}>
                         <MessageCircle size={24} color="white" />
                         <View style={[styles.notificationDot, { backgroundColor: "#34D399" }]} />
                     </TouchableOpacity>
                 </View>
             </View>
-
 
             {/* Search Bar */}
             <View style={styles.searchBar}>
@@ -416,12 +417,13 @@ const Home = () => {
                                 }
                                 activeOpacity={0.8}
                             >
-                                <Image source={{ uri: category.image }} style={styles.categoryImage} />
+                                <Image
+                                    source={{ uri: category.image }}
+                                    style={styles.categoryImage}
+                                    resizeMode="cover"
+                                />
                                 <View style={styles.categoryOverlay}>
                                     <Text style={styles.categoryText}>{category.name}</Text>
-                                    {selectedCategory === category.name && (
-                                        <Icon name="check-circle" size={16} color="white" />
-                                    )}
                                 </View>
                             </TouchableOpacity>
                         ))}
@@ -492,7 +494,35 @@ const Home = () => {
 export default Home;
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#F8FAFC" },
+    container: { flex: 1, backgroundColor: "#F8FAFC",top:30 },
+    header: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingHorizontal: 20,
+        paddingTop: 50,
+        paddingBottom: 20,
+        backgroundColor: "#4CAF50",
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
+    },
+    headerLeft: { flexDirection: "row", alignItems: "center" },
+    avatar: { width: 50, height: 50, borderRadius: 25 },
+    headerTitle: { color: "#fff", fontSize: 18, fontWeight: "700" },
+    headerSubtitle: { color: "#D1D5DB", fontSize: 12 },
+    headerRight: { flexDirection: "row", alignItems: "center" },
+    iconButton: { marginLeft: 16, position: "relative" },
+    notificationDot: {
+        position: "absolute",
+        top: -2,
+        right: -2,
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: "#EF4444",
+        borderWidth: 1,
+        borderColor: "#fff",
+    },
     searchBar: {
         flexDirection: "row",
         backgroundColor: "white",
@@ -507,6 +537,12 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
     },
     searchInput: { flex: 1, fontSize: 16, color: "#1F2937" },
+    sectionDescription: {
+        fontSize: 14,
+        color: "#6B7280",
+        marginTop: 7,
+        lineHeight: 20,
+    },
     sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
     sectionTitle: { fontSize: 18, fontWeight: "bold", color: "#1F2937" },
     linkText: { color: "#4CAF50", fontSize: 14, fontWeight: "600" },
@@ -517,8 +553,6 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(0,0,0,0.4)",
         justifyContent: "center",
         alignItems: "center",
-        flexDirection: "row",
-        gap: 4
     },
     categoryText: { color: "white", fontSize: 12, fontWeight: "bold", textAlign: "center" },
     recipesHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
@@ -539,7 +573,6 @@ const styles = StyleSheet.create({
     viewButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: "#EEF2FF", borderRadius: 8 },
     viewButtonText: { color: "#3B82F6", fontSize: 12, fontWeight: "600" },
     list: { paddingBottom: 20 },
-
     addButton: { position: "absolute", bottom: 30, right: 20, backgroundColor: "#3B82F6", padding: 16, borderRadius: 28, elevation: 8, shadowColor: "#3B82F6", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
     emptyState: { alignItems: "center", justifyContent: "center", paddingVertical: 60, paddingHorizontal: 40 },
     emptyStateTitle: { fontSize: 18, fontWeight: "600", color: "#374151", marginTop: 16, marginBottom: 8 },
@@ -547,20 +580,20 @@ const styles = StyleSheet.create({
     clearSearchButton: { backgroundColor: "#3B82F6", paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8, marginTop: 16 },
     clearSearchButtonText: { color: "#fff", fontWeight: "600", fontSize: 14 },
 
-    // Recipe Detail Styles
+    // Recipe Detail Modal Styles
     detailContainer: { flex: 1, backgroundColor: "#F8FAFC" },
-    backButton: { padding: 8, borderRadius: 8, backgroundColor: "#F3F4F6" },
-    detailHeaderTitle: { fontSize: 18, fontWeight: "600", color: "#374151" },
     detailHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
         padding: 16,
-        paddingTop: 36, // 16 + 20px top extra
+        paddingTop: 50,
         backgroundColor: "#fff",
         borderBottomWidth: 1,
         borderBottomColor: "#E5E7EB"
     },
+    backButton: { padding: 8, borderRadius: 8, backgroundColor: "#F3F4F6" },
+    detailHeaderTitle: { fontSize: 18, fontWeight: "600", color: "#374151" },
     detailContent: { flex: 1 },
     detailImageContainer: { position: "relative", height: 250 },
     detailImage: { width: "100%", height: "100%" },
@@ -591,40 +624,4 @@ const styles = StyleSheet.create({
     saveButtonText: { color: "#fff", fontSize: 14, fontWeight: "600" },
     shareButton: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#fff", paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, borderWidth: 1, borderColor: "#3B82F6" },
     shareButtonText: { color: "#3B82F6", fontSize: 14, fontWeight: "600" },
-    sectionDescription: {
-        fontSize: 14,
-        color: "#6B7280",
-        marginTop: 7,
-        lineHeight: 20,
-    },
-    header: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        paddingHorizontal: 20,
-        top:30,
-        height:130,
-        paddingVertical: 12,
-        backgroundColor: "#4CAF50",
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
-    },
-    headerLeft: { flexDirection: "row", alignItems: "center" },
-    avatar: { width: 50, height: 50, borderRadius: 25 },
-    headerTitle: { color: "#fff", fontSize: 22, fontWeight: "700" },
-    headerSub: { color: "#E0E7FF", fontSize: 16 },
-    headerSubtitle: { color: "#D1D5DB", fontSize: 12 },
-    headerRight: { flexDirection: "row", alignItems: "center" },
-    iconButton: { marginLeft: 16, position: "relative" },
-    notificationDot: {
-        position: "absolute",
-        top: -2,
-        right: -2,
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-        backgroundColor: "#EF4444", // red dot
-        borderWidth: 1,
-        borderColor: "#fff",
-    },
 });
