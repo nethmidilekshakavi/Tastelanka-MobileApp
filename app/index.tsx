@@ -4,7 +4,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  ImageBackground
+  ImageBackground,
+  BackHandler
 } from 'react-native';
 import { useRouter } from "expo-router";
 
@@ -51,7 +52,7 @@ export default function Index() {
               {/* Skip button */}
               <TouchableOpacity
                   style={styles.skipButton}
-                  onPress={() => router.push("/(auth)/login")}
+                  onPress={() => BackHandler.exitApp()}   // close app
                   activeOpacity={0.7}
               >
                 <Text style={styles.skipText}>Skip</Text>
