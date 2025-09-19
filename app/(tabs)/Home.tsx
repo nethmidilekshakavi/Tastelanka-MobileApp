@@ -82,6 +82,21 @@ const Home = () => {
         { name: "Vegetarian & Healthy", image: "https://i.pinimg.com/1200x/f0/7c/5a/f07c5a46b6a3072e36a457b495bb827b.jpg" },
     ];
 
+    const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
+
+    const toggleFavorite = (recipe: Recipe) => {
+        setFavoriteRecipes(prev => {
+            if (prev.find(r => r.rid === recipe.rid)) {
+                // Remove if already favorite
+                return prev.filter(r => r.rid !== recipe.rid);
+            } else {
+                // Add to favorites
+                return [...prev, recipe];
+            }
+        });
+    };
+
+
     useEffect(() => {
         const auth = getAuth();
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -280,7 +295,6 @@ const Home = () => {
         return (
             <TouchableOpacity
                 style={styles.card}
-                onPress={() => handleRecipePress(item)}
                 activeOpacity={0.7}
             >
                 <View style={styles.imageContainer}>
@@ -296,11 +310,31 @@ const Home = () => {
                             <Text style={styles.noImageText}>No Image</Text>
                         </View>
                     )}
+
                     {item.category && (
                         <View style={styles.categoryBadge}>
                             <Text style={styles.categoryBadgeText}>{item.category}</Text>
                         </View>
                     )}
+
+                    {/* Favorite Button */}
+                    <TouchableOpacity
+                        style={{
+                            position: "absolute",
+                            top: 8,
+                            right: 8,
+                            backgroundColor: "rgba(255,255,255,0.9)",
+                            padding: 6,
+                            borderRadius: 20,
+                        }}
+                        onPress={() => toggleFavorite(item)}
+                    >
+                        <Icon
+                            name={favoriteRecipes.find(r => r.rid === item.rid) ? "favorite" : "favorite-border"}
+                            size={20}
+                            color={favoriteRecipes.find(r => r.rid === item.rid) ? "#EF4444" : "#6B7280"}
+                        />
+                    </TouchableOpacity>
                 </View>
 
                 <View style={styles.cardContent}>
@@ -322,17 +356,28 @@ const Home = () => {
                         </View>
                     </View>
 
+                    {/* Recipe Button */}
                     <TouchableOpacity
-                        style={styles.viewButton}
+                        style={{
+                            marginTop: 8,
+                            backgroundColor: "#3B82F6",
+                            paddingVertical: 8,
+                            borderRadius: 8,
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 6,
+                        }}
                         onPress={() => handleRecipePress(item)}
                     >
-                        <Icon name="visibility" size={16} color="#3B82F6" />
-                        <Text style={styles.viewButtonText}>View Recipe</Text>
+                        <Icon name="restaurant-menu" size={16} color="#fff" />
+                        <Text style={{ color: "#fff", fontWeight: "600" }}>Recipe</Text>
                     </TouchableOpacity>
                 </View>
             </TouchableOpacity>
         );
     };
+
 
     const filteredRecipes = recipes.filter(recipe =>
         recipe.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -349,9 +394,9 @@ const Home = () => {
                             style={styles.avatar}
                         />
                     </TouchableOpacity>
-                    <View style={{ marginLeft: 12 }}>
+                    <View style={{ marginLeft: 14 }}>
                         <Text style={styles.headerTitle}>Hello, {currentUser?.fullName || "Guest"}!</Text>
-                        <Text style={styles.headerSubtitle}>Welcome to TasteLanka 🇱🇰</Text>
+                        <Text style={styles.headerSubtitle}>Welcome to TasteLanka 🇱🇰🌾</Text>
                     </View>
                 </View>
 
@@ -385,7 +430,7 @@ const Home = () => {
                 )}
             </View>
 
-            <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+            <ScrollView contentContainerStyle={{ paddingBottom: 100,top:50 }}>
                 <Text style={[styles.sectionDescription, { marginBottom: 20, paddingHorizontal: 20 }]}>
                     Explore the rich and delicious flavors of Sri Lankan cuisine. Find your favorite dishes and try something new!
                 </Text>
@@ -426,6 +471,7 @@ const Home = () => {
                                     <Text style={styles.categoryText}>{category.name}</Text>
                                 </View>
                             </TouchableOpacity>
+
                         ))}
                     </ScrollView>
                 </View>
@@ -460,6 +506,7 @@ const Home = () => {
                                 >
                                     <Text style={styles.clearSearchButtonText}>Clear Search</Text>
                                 </TouchableOpacity>
+
                             )}
                         </View>
                     ) : (
@@ -502,15 +549,16 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 50,
         paddingBottom: 20,
+        height:170,
         backgroundColor: "#4CAF50",
         borderBottomLeftRadius: 20,
         borderBottomRightRadius: 20,
     },
-    headerLeft: { flexDirection: "row", alignItems: "center" },
-    avatar: { width: 50, height: 50, borderRadius: 25 },
-    headerTitle: { color: "#fff", fontSize: 18, fontWeight: "700" },
-    headerSubtitle: { color: "#D1D5DB", fontSize: 12 },
-    headerRight: { flexDirection: "row", alignItems: "center" },
+    headerLeft: { flexDirection: "row", alignItems: "center" ,top:2},
+    avatar: { width: 60, height: 60, borderRadius: 25,bottom:30 },
+    headerTitle: { color: "#fff", fontSize: 22, fontWeight: "700" ,bottom:30},
+    headerSubtitle: { color: "#D1D5DB", fontSize: 16,bottom:25 },
+    headerRight: { flexDirection: "row", alignItems: "center" ,bottom:20},
     iconButton: { marginLeft: 16, position: "relative" },
     notificationDot: {
         position: "absolute",
@@ -524,9 +572,12 @@ const styles = StyleSheet.create({
         borderColor: "#fff",
     },
     searchBar: {
+        position: 'absolute', // add this
+        left: 16,
+        right: 16,
+        top:140,
         flexDirection: "row",
         backgroundColor: "white",
-        margin: 16,
         padding: 12,
         borderRadius: 12,
         alignItems: "center",
@@ -535,12 +586,15 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
+        zIndex: 100,
     },
+
     searchInput: { flex: 1, fontSize: 16, color: "#1F2937" },
     sectionDescription: {
         fontSize: 14,
         color: "#6B7280",
-        marginTop: 7,
+        marginBottom:10 ,
+
         lineHeight: 20,
     },
     sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },

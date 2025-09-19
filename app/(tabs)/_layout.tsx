@@ -21,15 +21,6 @@ function TabLayout() {
                     ),
                 }}
             />
-            <Tabs.Screen
-                name="Notification"
-                options={{
-                    title: "Notification",
-                    tabBarIcon: ({ color, size }) => (
-                        <AntDesign name="bell" size={size} color={color} />
-                    ),
-                }}
-            />
 
             <Tabs.Screen
                 name="Category"
@@ -37,6 +28,15 @@ function TabLayout() {
                     title: 'Category',
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="information-circle-outline" size={size} color={color} />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="Favorites"
+                options={{
+                    title: "Favorites",
+                    tabBarIcon: ({ color, size }) => (
+                        <AntDesign name="heart" size={size} color={color} />
                     ),
                 }}
             />
