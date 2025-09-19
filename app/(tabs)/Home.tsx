@@ -9,7 +9,7 @@ import {
     FlatList,
     StyleSheet,
     SafeAreaView,
-    Modal, Alert,
+    Modal,
 } from "react-native";
 import { Search, Bell, MessageCircle } from "lucide-react-native";
 import { useRouter } from "expo-router";
@@ -597,7 +597,6 @@ const styles = StyleSheet.create({
         marginTop: 7,
         lineHeight: 20,
     },
-
     header: {
         flexDirection: "row",
         justifyContent: "space-between",

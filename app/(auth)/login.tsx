@@ -12,30 +12,24 @@ import {
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import { login } from "@/services/authService";
-import { Video } from "expo-av"; // <-- import Video from expo-av
-// @ts-ignore
-import videoFile from "../../assets/vidios/PinDown.io_@kamkumarasinghe_1756743322.mp4";
-import {getDoc} from "@firebase/firestore";
-import {doc} from "firebase/firestore";
-import {db} from "@/config/firebaseConfig";
-import image from "../../assets/images/fac132dbf73ecd95071f6da669ce7f15.jpg";
-
+import { getDoc, doc } from "firebase/firestore";
+import { db } from "@/config/firebaseConfig";
 
 const LoginScreen = () => {
     const router = useRouter();
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [rememberMe, setRememberMe] = useState<boolean>(false);
 
     const handleLogin = async () => {
         if (isLoading) return;
         setIsLoading(true);
 
         try {
-            const user = await login(email, password); // Firebase auth login
+            const user = await login(email, password);
             console.log("Login success:", user);
 
-            // firestore users collection එකෙන් role එක ගන්න
             const userDoc = await getDoc(doc(db, "users", user.uid));
             const userData = userDoc.data();
 
@@ -44,7 +38,6 @@ const LoginScreen = () => {
             } else {
                 router.push("/(tabs)/Home");
             }
-
         } catch (err) {
             console.error(err);
             Alert.alert("Login failed", "Something went wrong");
@@ -53,127 +46,196 @@ const LoginScreen = () => {
         }
     };
 
-
     return (
-        <View className="flex-1 bg-gradient-to-br from-green-100 to-green-50">
-            {/* Top curved section with image */}
-            <View className="relative">
+        <View className="flex-1 bg-white">
+            {/* Top curved section with background image */}
+            <View className="relative h-96">
                 <ImageBackground
                     source={{
-                        uri: "https://i.pinimg.com/1200x/c8/11/e1/c811e16e296b7830943b90943a3d5c51.jpg",
+                        uri: "https://i.pinimg.com/1200x/32/6f/7d/326f7dadb79758177b3ec7249a659c8d.jpg",
                     }}
-                    className="h-80 rounded-b-[50px] justify-center items-center overflow-hidden"
+                    style={{ flex: 1 }}
                     resizeMode="cover"
                 >
-                    <View className="absolute inset-0 opacity-50" />
-                    <View className="absolute top-10 right-10 w-32 h-32 bg-green-400 rounded-full opacity-20" />
-                    <View className="absolute top-20 left-5 w-20 h-20 bg-green-600 rounded-full opacity-30" />
-                    <Text className="text-white text-3xl font-bold mb-2">
-                        Welcome Back TasteLanka !
-                    </Text>
-                    <Text className="text-green-100 text-lg">SIGN IN</Text>
+                    {/* Decorative curved shapes */}
+                    <View
+                        className="absolute top-20 right-0 w-40 h-40 rounded-full opacity-20"
+                        style={{ backgroundColor: "rgba(255,255,255,0.3)" }}
+                    />
+                    <View
+                        className="absolute top-32 left-10 w-24 h-24 rounded-full opacity-15"
+                        style={{ backgroundColor: "rgba(255,255,255,0.4)" }}
+                    />
+                    <View
+                        className="absolute top-10 right-20 w-16 h-16 rounded-full opacity-25"
+                        style={{ backgroundColor: "rgba(255,255,255,0.3)" }}
+                    />
+
+                    {/* Curved bottom border */}
+                    <View
+                        className="absolute bottom-0 left-0 right-0 h-20"
+                        style={{
+                            backgroundColor: "white",
+                            borderTopLeftRadius: 40,
+                            borderTopRightRadius: 40,
+                        }}
+                    />
                 </ImageBackground>
+
+                {/* Title text */}
+                <View className="absolute bottom-24 left-8">
+                    <Text className="text-white text-3xl font-bold mb-1">Sign in</Text>
+                </View>
             </View>
 
-            {/* Bottom white section with form */}
-            <View className="flex-1 bg-white mx-6 -mt-10 rounded-t-[30px] px-6 pt-10 shadow-lg">
+            {/* Form section */}
+            <View className="flex-1 px-8 -mt-4">
                 {/* Email Input */}
                 <View className="mb-6">
-                    <TextInput
-                        placeholder="Email"
-                        className="bg-gray-50 border border-gray-200 rounded-2xl px-6 py-4 text-gray-800 text-lg"
-                        placeholderTextColor="#9CA3AF"
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                    />
+                    <Text className="text-gray-600 text-sm mb-2 ml-1">Email</Text>
+                    <View className="border-b border-gray-200 pb-2">
+                        <TextInput
+                            placeholder="demo@email.com"
+                            className="text-gray-800 text-base py-2"
+                            placeholderTextColor="#C7C7CD"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                        />
+                    </View>
                 </View>
 
                 {/* Password Input */}
-                <View className="mb-8">
-                    <TextInput
-                        placeholder="Password"
-                        className="bg-gray-50 border border-gray-200 rounded-2xl px-6 py-4 text-gray-800 text-lg"
-                        placeholderTextColor="#9CA3AF"
-                        secureTextEntry
-                        value={password}
-                        onChangeText={setPassword}
-                    />
+                <View className="mb-6">
+                    <Text className="text-gray-600 text-sm mb-2 ml-1">Password</Text>
+                    <View className="border-b border-gray-200 pb-2">
+                        <TextInput
+                            placeholder="Enter your password"
+                            className="text-gray-800 text-base py-2"
+                            placeholderTextColor="#C7C7CD"
+                            secureTextEntry
+                            value={password}
+                            onChangeText={setPassword}
+                        />
+                    </View>
+                </View>
+
+                {/* Remember Me and Forgot Password */}
+                <View className="flex-row justify-between items-center mb-8">
+                    <TouchableOpacity
+                        className="flex-row items-center"
+                        onPress={() => setRememberMe(!rememberMe)}
+                    >
+                        <View
+                            className={`w-5 h-5 rounded border-2 mr-2 ${
+                                rememberMe ? "bg-pink-400 border-pink-400" : "border-gray-300"
+                            }`}
+                        >
+                            {rememberMe && (
+                                <Text className="text-white text-xs text-center">✓</Text>
+                            )}
+                        </View>
+                        <Text className="text-gray-600 text-sm">Remember Me</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity>
+                        <Text className="text-green-500 text-sm font-medium">
+                            Forgot Password?
+                        </Text>
+                    </TouchableOpacity>
                 </View>
 
                 {/* Login Button */}
                 <TouchableOpacity
-                    className="bg-green-500 py-4 rounded-2xl mb-6 shadow-md"
+                    className="py-4 rounded-3xl mb-8 shadow-lg"
+                    style={{
+                        backgroundColor: "#4CAF50",
+                        shadowColor: "#4CAF50",
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 8,
+                        elevation: 8,
+                    }}
                     onPress={handleLogin}
                     disabled={isLoading}
                 >
                     {isLoading ? (
                         <ActivityIndicator color="#fff" size="large" />
                     ) : (
-                        <Text className="text-center text-xl text-white font-semibold">
-                            LOGIN
+                        <Text className="text-center text-lg text-white font-semibold">
+                            Login
                         </Text>
                     )}
                 </TouchableOpacity>
 
-                {/* Social Media Buttons */}
-                <View className="flex-row justify-center space-x-4 mb-8">
-                    <TouchableOpacity className="w-12 h-12 rounded-full justify-center items-center bg-gray-100">
-                        <Image
-                            source={{
-                                uri: "https://i.pinimg.com/736x/7b/ed/39/7bed398644d61cae7c4dd853b558a1c9.jpg",
-                            }}
-                            className="w-6 h-6"
-                            resizeMode="contain"
-                        />
-                    </TouchableOpacity>
+                {/* Social Login Section */}
+                <View className="items-center mb-6">
+                    <Text className="text-gray-500 text-sm mb-4">Or continue with</Text>
 
-                    <TouchableOpacity className="w-12 h-12 rounded-full justify-center items-center bg-gray-100">
-                        <Image
-                            source={{
-                                uri: "https://i.pinimg.com/736x/d9/7b/bb/d97bbb08017ac2309307f0822e63d082.jpg",
+                    <View className="flex-row justify-center space-x-4">
+                        {/* Google Login */}
+                        <TouchableOpacity
+                            className="w-14 h-14 rounded-full justify-center items-center bg-gray-100 border border-gray-200"
+                            onPress={() => {
+                                Alert.alert(
+                                    "Google Login",
+                                    "Google login functionality will be implemented here"
+                                );
                             }}
-                            className="w-6 h-6"
-                            resizeMode="contain"
-                        />
-                    </TouchableOpacity>
+                        >
+                            <Image
+                                source={{
+                                    uri: "https://developers.google.com/identity/images/g-logo.png",
+                                }}
+                                className="w-6 h-6"
+                                resizeMode="contain"
+                            />
+                        </TouchableOpacity>
 
-                    <TouchableOpacity className="w-12 h-12 rounded-full justify-center items-center bg-gray-100">
-                        <Image
-                            source={{
-                                uri: "https://i.pinimg.com/736x/b5/66/fa/b566fa1473df5b662b54babb764a46f2.jpg",
+                        {/* Facebook Login */}
+                        <TouchableOpacity
+                            className="w-14 h-14 rounded-full justify-center items-center bg-blue-600"
+                            onPress={() => {
+                                Alert.alert(
+                                    "Facebook Login",
+                                    "Facebook login functionality will be implemented here"
+                                );
                             }}
-                            className="w-6 h-6"
-                            resizeMode="contain"
-                        />
-                    </TouchableOpacity>
+                        >
+                            <Text className="text-white text-xl font-bold">f</Text>
+                        </TouchableOpacity>
+
+                        {/* Twitter Login */}
+                        <TouchableOpacity
+                            className="w-14 h-14 rounded-full justify-center items-center bg-sky-500"
+                            onPress={() => {
+                                Alert.alert(
+                                    "Twitter Login",
+                                    "Twitter login functionality will be implemented here"
+                                );
+                            }}
+                        >
+                            <Image
+                                source={{
+                                    uri: "https://cdn-icons-png.flaticon.com/512/733/733579.png",
+                                }}
+                                className="w-6 h-6"
+                                resizeMode="contain"
+                            />
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Register Link */}
-                <Pressable
-                    onPress={() => router.push("/register")}
-                    className="items-center"
-                >
-                    <Text className="text-gray-600 text-base">
-                        Don't have an account?{" "}
-                        <Text className="text-green-500 font-semibold">Register</Text>
-                    </Text>
-                </Pressable>
-
-                 Video
-                {/*<View className="mt-4 w-full h-48">*/}
-                {/*    <Video*/}
-                {/*        source={videoFile}      // use local video*/}
-                {/*        style={{ width: "100%", height: 230,  borderRadius: 12 }}*/}
-                {/*        useNativeControls*/}
-                {/*        resizeMode="cover"*/}
-                {/*        isLooping*/}
-                {/*        shouldPlay              // auto play*/}
-                {/*    />*/}
-
-                {/*</View>*/}
-
+                <View className="items-center">
+                    <Pressable onPress={() => router.push("/register")}>
+                        <Text className="text-gray-600 text-base">
+                            Don't have an Account ?{" "}
+                            <Text className="text-green-500 font-semibold">Sign up</Text>
+                        </Text>
+                    </Pressable>
+                </View>
             </View>
         </View>
     );
