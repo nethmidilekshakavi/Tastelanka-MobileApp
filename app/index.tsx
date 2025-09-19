@@ -1,196 +1,171 @@
-import { View, Text, TouchableOpacity, ImageBackground, StyleSheet, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  ImageBackground
+} from 'react-native';
 import { useRouter } from "expo-router";
 
 export default function Index() {
-
   const router = useRouter();
   const { width, height } = Dimensions.get('window');
+
   return (
-    <View style={styles.container}>
-      {/* Background with Sri Lankan food image overlay */}
-      <ImageBackground
-        source={{
-          uri: 'https://images.unsplash.com/photo-1596797038530-2c107229654b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
-        }}
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      >
-        {/* Dark overlay for better text readability */}
-        <View style={styles.overlay} />
-        
-        {/* Content */}
+      <View style={styles.container}>
+        {/* Main content area */}
         <View style={styles.content}>
-          {/* App Logo/Icon Area */}
-          <View style={styles.logoContainer}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoText}>🍛</Text>
-            </View>
-          </View>
-
-          {/* Main Title */}
-          <Text style={styles.mainTitle}>
-            Sri Lankan Recipe Finder
-          </Text>
-          
-          {/* Subtitle */}
-          
-
-          {/* Features */}
-          <View style={styles.featuresContainer}>
-            <View style={styles.feature}>
-              <Text style={styles.featureIcon}>🌶️</Text>
-              <Text style={styles.featureText}>Authentic Spices</Text>
-            </View>
-            <View style={styles.feature}>
-              <Text style={styles.featureIcon}>👨‍🍳</Text>
-              <Text style={styles.featureText}>Traditional Methods</Text>
-            </View>
-            <View style={styles.feature}>
-              <Text style={styles.featureIcon}>🥥</Text>
-              <Text style={styles.featureText}>Local Ingredients</Text>
-            </View>
-          </View>
-
-          {/* Get Started Button */}
-          <TouchableOpacity 
-            style={styles.getStartedButton}
-            onPress={() => router.push("/(auth)/login")}
-            activeOpacity={0.8}
+          {/* 🔥 Top section with background image */}
+          <ImageBackground
+              source={{
+                uri: 'https://i.pinimg.com/1200x/0f/b1/12/0fb112396261721f651417a92fe58412.jpg',
+              }}
+              style={styles.imageSection}
+              imageStyle={{ borderBottomLeftRadius: 30, borderBottomRightRadius: 30 }}
+              resizeMode="cover"
           >
-            <Text style={styles.getStartedText}>Get Started</Text>
-            <Text style={styles.arrowText}>→</Text>
-          </TouchableOpacity>
+            {/* Decorative elements */}
+            <View style={styles.decorativeCircle1} />
+            <View style={styles.decorativeCircle2} />
+            <View style={styles.decorativeLeaf} />
+          </ImageBackground>
 
-          {/* Bottom tagline */}
-          <Text style={styles.tagline}>
-            "Taste the heritage of Ceylon"
-          </Text>
+          {/* Bottom section with content */}
+          <View style={styles.bottomSection}>
+            {/* Main heading */}
+            <Text style={styles.mainHeading}>
+              Welcome to TasteLanka 🇱🇰🌾
+            </Text>
+
+            <Text style={styles.description}>
+              Discover the rich culinary heritage of Sri Lanka with our handpicked recipes.
+              From spicy curries to sweet delights, TasteLanka brings authentic flavors
+              straight to your kitchen in a simple and healthy way.
+            </Text>
+
+
+
+            {/* Buttons section */}
+            <View style={styles.buttonsContainer}>
+              {/* Skip button */}
+              <TouchableOpacity
+                  style={styles.skipButton}
+                  onPress={() => router.push("/(auth)/login")}
+                  activeOpacity={0.7}
+              >
+                <Text style={styles.skipText}>Skip</Text>
+              </TouchableOpacity>
+
+              {/* Next button */}
+              <TouchableOpacity
+                  style={styles.nextButton}
+                  onPress={() => router.push("/(auth)/login")}
+                  activeOpacity={0.8}
+              >
+                <Text style={styles.nextText}>Next</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-      </ImageBackground>
-    </View>
+      </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    top:30,
     flex: 1,
-  },
-  backgroundImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: '#FFFFFF',
   },
   content: {
     flex: 1,
+  },
+  imageSection: {
+    height:500,
+    flex: 0.65,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: "hidden",
+  },
+  decorativeCircle1: {
+    position: 'absolute',
+    top: 40,
+    right: 30,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  decorativeCircle2: {
+    position: 'absolute',
+    top: 120,
+    left: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  decorativeLeaf: {
+    position: 'absolute',
+    bottom: 40,
+    right: 40,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  bottomSection: {
+    flex: 0.35,
     paddingHorizontal: 30,
-    paddingVertical: 50,
+    paddingBottom: 60,
+    justifyContent: 'space-between',
   },
-  logoContainer: {
-    marginBottom: 30,
-  },
-  logoCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  logoText: {
-    fontSize: 40,
-  },
-  mainTitle: {
-    fontSize: 32,
+  mainHeading: {
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#2C3E50',
     textAlign: 'center',
-    marginBottom: 15,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    marginBottom: 20,
+    lineHeight: 36,
   },
-  subtitle: {
-    fontSize: 18,
-    color: '#F0F0F0',
-    textAlign: 'center',
-    lineHeight: 26,
-    marginBottom: 40,
-    fontWeight: '300',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  featuresContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginBottom: 50,
-    paddingHorizontal: 20,
-  },
-  feature: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  featureIcon: {
-    fontSize: 30,
-    marginBottom: 8,
-  },
-  featureText: {
-    color: '#FFFFFF',
+  description: {
     fontSize: 14,
-    fontWeight: '500',
+    color: '#7A8A99',
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    lineHeight: 22,
+    marginBottom: 30,
+    paddingHorizontal: 10,
   },
-  getStartedButton: {
+  buttonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  skipButton: {
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+  },
+  skipText: {
+    color: '#9CA3AF',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  nextButton: {
     backgroundColor: '#4CAF50',
     paddingHorizontal: 40,
-    paddingVertical: 18,
-    borderRadius: 30,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 30,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    paddingVertical: 15,
+    borderRadius: 25,
+    shadowColor: '#4CAF50',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
-  getStartedText: {
+  nextText: {
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginRight: 10,
-  },
-  arrowText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  tagline: {
-    color: '#E0E0E0',
     fontSize: 16,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    fontWeight: 'bold',
   },
 });
-
