@@ -10,7 +10,6 @@ const RootLayout = () => {
       <AuthProvider>
         <Slot />
       </AuthProvider>
-
     </LoaderProvider>
   )
 }

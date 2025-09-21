@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, createContext } from "react";
+import React, { useEffect, useState, createContext } from "react";
 import {
     View,
     Text,
@@ -360,7 +360,10 @@ const Home = () => {
                     <TouchableOpacity
                         style={{
                             marginTop: 8,
-                            backgroundColor: "#3B82F6",
+                            bottom:20,
+                            backgroundColor: "transparent",
+                            borderWidth: 1,
+                            borderColor: "#4CAF50", // Keep the green as border
                             paddingVertical: 8,
                             borderRadius: 8,
                             flexDirection: "row",
@@ -370,14 +373,13 @@ const Home = () => {
                         }}
                         onPress={() => handleRecipePress(item)}
                     >
-                        <Icon name="restaurant-menu" size={16} color="#fff" />
-                        <Text style={{ color: "#fff", fontWeight: "600" }}>Recipe</Text>
+                        <Icon name="restaurant-menu" size={16} color="#4CAF50" /> {/* Changed icon color */}
+                        <Text style={{ color: "#4CAF50", fontWeight: "600" }}>Recipe</Text> {/* Changed text color */}
                     </TouchableOpacity>
                 </View>
             </TouchableOpacity>
         );
     };
-
 
     const filteredRecipes = recipes.filter(recipe =>
         recipe.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -452,7 +454,7 @@ const Home = () => {
                                     {
                                         marginRight: 20,
                                         borderWidth: selectedCategory === category.name ? 3 : 0,
-                                        borderColor: "#3B82F6",
+                                        borderColor: "#4CAF50",
                                     },
                                 ]}
                                 onPress={() =>
@@ -575,7 +577,7 @@ const styles = StyleSheet.create({
         position: 'absolute', // add this
         left: 16,
         right: 16,
-        top:140,
+        top:130,
         flexDirection: "row",
         backgroundColor: "white",
         padding: 12,
@@ -611,30 +613,23 @@ const styles = StyleSheet.create({
     categoryText: { color: "white", fontSize: 12, fontWeight: "bold", textAlign: "center" },
     recipesHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
     recipeCount: { fontSize: 14, color: "#6B7280", fontWeight: "500" },
-    card: { flex: 1, backgroundColor: "#fff", margin: 6, borderRadius: 16, overflow: "hidden", elevation: 4, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8 },
-    imageContainer: { position: "relative", height: 140 },
     image: { width: "100%", height: "100%" },
     placeholder: { width: "100%", height: "100%", justifyContent: "center", alignItems: "center", backgroundColor: "#F1F5F9" },
     noImageText: { color: "#9CA3AF", fontSize: 12, marginTop: 4 },
     categoryBadge: { position: "absolute", top: 8, right: 8, backgroundColor: "rgba(255, 255, 255, 0.95)", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
     categoryBadgeText: { fontSize: 10, fontWeight: "600", color: "#374151" },
-    cardContent: { padding: 12 },
-    title: { fontWeight: "700", fontSize: 16, color: "#1E293B", marginBottom: 4 },
-    description: { fontSize: 12, color: "#6B7280", lineHeight: 16, marginBottom: 8 },
-    recipeStats: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
     statItem: { flexDirection: "row", alignItems: "center", gap: 4 },
     statText: { fontSize: 11, color: "#6B7280", fontWeight: "500" },
     viewButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: "#EEF2FF", borderRadius: 8 },
-    viewButtonText: { color: "#3B82F6", fontSize: 12, fontWeight: "600" },
+    viewButtonText: { color: "#4CAF50", fontSize: 12, fontWeight: "600" },
     list: { paddingBottom: 20 },
-    addButton: { position: "absolute", bottom: 30, right: 20, backgroundColor: "#3B82F6", padding: 16, borderRadius: 28, elevation: 8, shadowColor: "#3B82F6", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
+    addButton: { position: "absolute", bottom: 30, right: 20, backgroundColor: "#4CAF50", padding: 16, borderRadius: 28, elevation: 8, shadowColor: "#4CAF50", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
     emptyState: { alignItems: "center", justifyContent: "center", paddingVertical: 60, paddingHorizontal: 40 },
     emptyStateTitle: { fontSize: 18, fontWeight: "600", color: "#374151", marginTop: 16, marginBottom: 8 },
     emptyStateSubtitle: { fontSize: 14, color: "#9CA3AF", textAlign: "center", lineHeight: 20 },
-    clearSearchButton: { backgroundColor: "#3B82F6", paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8, marginTop: 16 },
+    clearSearchButton: { backgroundColor: "#", paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8, marginTop: 16 },
     clearSearchButtonText: { color: "#fff", fontWeight: "600", fontSize: 14 },
 
-    // Recipe Detail Modal Styles
     detailContainer: { flex: 1, backgroundColor: "#F8FAFC" },
     detailHeader: {
         flexDirection: "row",
@@ -666,7 +661,7 @@ const styles = StyleSheet.create({
     detailSectionTitle: { fontSize: 18, fontWeight: "600", color: "#374151" },
     ingredientsContainer: { backgroundColor: "#fff", padding: 16, borderRadius: 12, elevation: 2 },
     ingredientItem: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8 },
-    ingredientBullet: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#3B82F6" },
+    ingredientBullet: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#4CAF50" },
     ingredientText: { fontSize: 14, color: "#374151", flex: 1 },
     instructionsContainer: { backgroundColor: "#fff", padding: 16, borderRadius: 12, elevation: 2 },
     instructionItem: { flexDirection: "row", gap: 12, paddingVertical: 8 },
@@ -674,8 +669,67 @@ const styles = StyleSheet.create({
     instructionNumberText: { fontSize: 12, fontWeight: "bold", color: "#fff" },
     instructionText: { fontSize: 14, color: "#374151", flex: 1, lineHeight: 20 },
     actionButtons: { flexDirection: "row", gap: 12, marginTop: 20 },
-    saveButton: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#3B82F6", paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12 },
+    saveButton: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#4CAF50", paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12 },
     saveButtonText: { color: "#fff", fontSize: 14, fontWeight: "600" },
-    shareButton: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#fff", paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, borderWidth: 1, borderColor: "#3B82F6" },
-    shareButtonText: { color: "#3B82F6", fontSize: 14, fontWeight: "600" },
+    shareButton: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#", paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, borderWidth: 1, borderColor: "#4CAF50" },
+    shareButtonText: { color: "#4CAF50", fontSize: 14, fontWeight: "600" },
+
+    card: {
+        flex: 1,
+        backgroundColor: "#fff",
+        margin: 6,
+        borderRadius: 16,
+        overflow: "hidden",
+        elevation: 4,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        height: 290,
+        maxWidth: '48%',
+        minWidth: 150,
+    },
+
+
+    imageContainer: {
+        position: "relative",
+        height: 130,
+        width: '100%'
+    },
+
+
+    cardContent: {
+        padding: 12,
+        height: 160,
+        justifyContent: 'space-between',
+        flex: 1
+    },
+
+
+    title: {
+        fontWeight: "700",
+        fontSize: 16,
+        color: "#1E293B",
+        marginBottom: 4,
+        height: 35,
+        textAlignVertical: 'top'
+    },
+
+    description: {
+        fontSize: 12,
+        color: "#6B7280",
+        lineHeight: 16,
+        marginBottom: 8,
+        height: 30,
+        textAlignVertical: 'top'
+    },
+
+    recipeStats: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginBottom:10,
+        height: 20,
+        bottom:8
+    },
+
 });

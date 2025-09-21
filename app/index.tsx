@@ -127,7 +127,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#2C3E50',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 25,
+    top:20,
     lineHeight: 36,
   },
   description: {
@@ -135,7 +136,7 @@ const styles = StyleSheet.create({
     color: '#7A8A99',
     textAlign: 'center',
     lineHeight: 22,
-    marginBottom: 30,
+    marginBottom: 40,
     paddingHorizontal: 10,
   },
   buttonsContainer: {
