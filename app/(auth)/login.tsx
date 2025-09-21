@@ -215,19 +215,19 @@ const LoginScreen = () => {
 
                         {/* Twitter Login */}
                         <TouchableOpacity
-                            className="w-14 h-14 rounded-full justify-center items-center"
+                            className="w-14 h-14 rounded-full justify-center items-center left-6"
                             onPress={() => {
                                 Alert.alert(
-                                    "Twitter Login",
-                                    "Twitter login functionality will be implemented here"
+                                    "Facebook Login",
+                                    "Facebook login functionality will be implemented here"
                                 );
                             }}
                         >
                             <Image
                                 source={{
-                                    uri: "https://i.pinimg.com/736x/98/0f/96/980f96304edcd0b16ed3b579d81c7a9e.jpg",
+                                    uri: "https://i.pinimg.com/736x/77/f1/0e/77f10efe301b3ba26b62d50e61fdb10a.jpg",
                                 }}
-                                className="w-13 h-13"
+                                className="w-10 h-10"
                                 resizeMode="contain"
                             />
                         </TouchableOpacity>

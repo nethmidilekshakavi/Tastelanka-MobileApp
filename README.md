@@ -58,7 +58,7 @@ TasteLanka is a mobile application built with **React Native** that provides aut
 ---
 
 ## Demonstration Video
-Watch the full demonstration here: [YouTube Demo](https://www.youtube.com/watch?v=your-demo-link)
+Watch the full demonstration here: [YouTube Demo](https://youtu.be/Y-sX6inW_sI?si=NS4ldMT4mT4MV30a)
 
 ---
 
