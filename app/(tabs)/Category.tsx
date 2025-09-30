@@ -13,6 +13,8 @@ import {
 import { db } from "@/config/firebaseConfig";
 import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import { useTheme } from "@/context/ThemeContext";
+import { Sun, Moon } from "lucide-react-native";
 
 interface Recipe {
     rid?: string;
@@ -37,13 +39,10 @@ const ASSET_IMAGES = [
     { id: 1, name: "Milk Rice", source: require("../../assets/images/rice & curry/kribath.jpg") },
     { id: 2, name: "Polos Curry", source: require("../../assets/images/rice & curry/polos.jpg") },
     { id: 3, name: "Kokis", source: require("../../assets/images/sweets/kokis.jpg") },
-    { id: 4, name: "chiken", source: require("../../assets/images/meet/b9bbb6d8962047236122c4f46d8ca0e4.jpg")},
-    { id: 5, name: "issowade", source: require("../../assets/images/streetFoods/issiwade.jpg")},
-    { id: 6, name: "kalupol", source: require("../../assets/images/vegr/04086f9f2b47ae7357f33cb802b534bc.jpg")},
-    { id: 7, name: "cutlut", source: require("../../assets/images/streetFoods/56711cde3cf86f455aa5d2ae59c5f5c8.jpg")},
-
-
-
+    { id: 4, name: "Chicken", source: require("../../assets/images/meet/b9bbb6d8962047236122c4f46d8ca0e4.jpg") },
+    { id: 5, name: "Issowade", source: require("../../assets/images/streetFoods/issiwade.jpg") },
+    { id: 6, name: "Kalupol", source: require("../../assets/images/vegr/04086f9f2b47ae7357f33cb802b534bc.jpg") },
+    { id: 7, name: "Cutlet", source: require("../../assets/images/streetFoods/56711cde3cf86f455aa5d2ae59c5f5c8.jpg") },
 ];
 
 const getRecipeImageSource = (recipe: Recipe) => {
@@ -62,18 +61,12 @@ const CategoryPage = () => {
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
+    const { theme, toggleTheme, colors } = useTheme();
 
     useEffect(() => {
-        let q;
-        if (selectedCategory) {
-            q = query(
-                collection(db, "recipes"),
-                where("category", "==", selectedCategory),
-                orderBy("title")
-            );
-        } else {
-            q = query(collection(db, "recipes"), orderBy("title"));
-        }
+        const q = selectedCategory
+            ? query(collection(db, "recipes"), where("category", "==", selectedCategory), orderBy("title"))
+            : query(collection(db, "recipes"), orderBy("title"));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const list = snapshot.docs.map((doc) => ({
@@ -162,7 +155,7 @@ const CategoryPage = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme === "light" ? "#F8FAFC" : "#1E293B" }]}>
             <View style={styles.headerContainer}>
                 <Text style={styles.headerTitle}>Taste Lanka Recipes</Text>
                 <Text style={styles.headerSubtitle}>Choose your favorite foods 🇱🇰🍽️ </Text>
@@ -174,7 +167,7 @@ const CategoryPage = () => {
 
                 {/* Recipes */}
                 <View style={{ paddingHorizontal: 20, marginTop: 10 }}>
-                    <Text style={styles.sectionTitle}>
+                    <Text style={[styles.sectionTitle, { color: theme === "light" ? "#111827" : "#fff" }]}>
                         {selectedCategory ? `${selectedCategory} Recipes` : "All Recipes"}
                     </Text>
                     {recipes.length === 0 ? (
@@ -229,6 +222,13 @@ const CategoryPage = () => {
                         >
                             <Text style={styles.modalCloseText}>Close</Text>
                         </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.themeButton, { backgroundColor: colors.primary }]}
+                            onPress={toggleTheme}
+                            activeOpacity={0.8}
+                        >
+                            {theme === "light" ? <Moon size={24} color="#fff" /> : <Sun size={24} color="#fff" />}
+                        </TouchableOpacity>
                     </View>
                 </View>
             </Modal>
@@ -239,13 +239,13 @@ const CategoryPage = () => {
 export default CategoryPage;
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#F8FAFC",top:30, },
+    container: { flex: 1, top: 30 },
     sectionTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
     categoryCard: { width: "100%", height: 120, borderRadius: 12, overflow: "hidden", marginBottom: 15 },
     categoryImage: { width: "100%", height: "100%" },
     categoryOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.3)", justifyContent: "center", alignItems: "center" },
     categoryText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
-    card: { flex: 1, backgroundColor: "#fff", margin: 6, borderRadius: 16, overflow: "hidden", elevation: 4, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8 },
+    card: { flex: 1, backgroundColor: "#fff", margin: 6, borderRadius: 16, overflow: "hidden", elevation: 4 },
     imageContainer: { position: "relative", height: 140 },
     image: { width: "100%", height: "100%" },
     placeholder: { width: "100%", height: "100%", justifyContent: "center", alignItems: "center", backgroundColor: "#F1F5F9" },
@@ -270,27 +270,8 @@ const styles = StyleSheet.create({
     modalText: { fontSize: 14, color: "#374151", marginBottom: 8 },
     modalCloseButton: { marginTop: 12, backgroundColor: "#3B82F6", padding: 10, borderRadius: 8, alignItems: "center" },
     modalCloseText: { color: "#fff", fontWeight: "600" },
-    headerContainer: {
-        padding: 20,
-        backgroundColor: "#4CAF50",
-        alignItems: "center",
-        color:"#fff",
-        justifyContent: "center",
-        borderBottomWidth: 1,
-        borderBottomColor: "#E5E7EB",
-        marginBottom: 10,
-    },
-    headerTitle: {
-        fontSize: 22,
-        fontWeight: "700",
-        color: "#fff",
-    },
-    headerSubtitle: {
-        fontSize: 18,
-        fontWeight: "400",
-        color: "#fff",
-        marginTop: 4,
-    },
-
-
+    headerContainer: { padding: 20, backgroundColor: "#4CAF50", alignItems: "center", justifyContent: "center", borderBottomWidth: 1, borderBottomColor: "#E5E7EB", marginBottom: 10 },
+    headerTitle: { fontSize: 22, fontWeight: "700", color: "#fff" },
+    headerSubtitle: { fontSize: 18, fontWeight: "400", color: "#fff", marginTop: 4 },
+    themeButton: { position: "absolute", bottom: 30, right: 20, padding: 16, borderRadius: 28, elevation: 8, alignItems: "center", justifyContent: "center" },
 });
