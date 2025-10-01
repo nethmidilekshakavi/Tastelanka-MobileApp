@@ -23,16 +23,18 @@ import {
     reauthenticateWithCredential,
     updateProfile,
 } from "firebase/auth";
+import { useTheme } from "@/context/ThemeContext";
+import { Sun, Moon } from "lucide-react-native";
 
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/davhloffd/image/upload";
 const UPLOAD_PRESET = "my_upload_preset";
-const DEFAULT_PROFILE_PIC =
-    "https://via.placeholder.com/150/ccc/fff?text=User";
+const DEFAULT_PROFILE_PIC = "https://via.placeholder.com/150/ccc/fff?text=User";
 
 const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const { theme, toggleTheme, colors } = useTheme();
     const [userInfo, setUserInfo] = useState({
         fullName: "",
         email: "",
@@ -40,7 +42,6 @@ const Profile = () => {
         joinDate: "",
     });
 
-    // Form states
     const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
     const [newPassword, setNewPassword] = useState("");
@@ -97,11 +98,9 @@ const Profile = () => {
         loadUserProfile();
     }, []);
 
-    // ✅ Pick and upload image to Cloudinary
     const handlePickImage = async () => {
         try {
-            const { status } =
-                await ImagePicker.requestMediaLibraryPermissionsAsync();
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (status !== "granted") {
                 Alert.alert(
                     "Permission required",
@@ -128,7 +127,6 @@ const Profile = () => {
 
                 setUploading(true);
 
-                // Upload to Cloudinary
                 const data = new FormData();
                 data.append("file", {
                     uri: imageUri,
@@ -142,7 +140,6 @@ const Profile = () => {
 
                 if (!file.secure_url) throw new Error("Upload failed");
 
-                // Update Firestore & Auth
                 const userRef = doc(db, "users", user.uid);
                 await updateDoc(userRef, { photoURL: file.secure_url });
                 await updateProfile(user, { photoURL: file.secure_url });
@@ -158,7 +155,6 @@ const Profile = () => {
         }
     };
 
-    // ✅ Save Profile + Password
     const handleSaveChanges = async () => {
         const user = auth.currentUser;
         if (!user) {
@@ -223,98 +219,143 @@ const Profile = () => {
 
     if (loading) {
         return (
-            <SafeAreaView style={styles.container}>
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#10B981" />
-                    <Text style={styles.loadingText}>Loading profile...</Text>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                    <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+                        Loading profile...
+                    </Text>
                 </View>
             </SafeAreaView>
         );
     }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : undefined}
                 style={{ flex: 1 }}
             >
                 <ScrollView contentContainerStyle={{ paddingBottom: 40, top: 30 }}>
                     {/* Profile Section */}
-                    <View style={styles.profileSection}>
+                    <View style={[styles.profileSection, { backgroundColor: colors.surface }]}>
                         <View style={styles.profileImageContainer}>
                             <Image
                                 source={{ uri: userInfo.photoURL }}
-                                style={styles.profileImage}
+                                style={[styles.profileImage, { borderColor: colors.border }]}
                             />
                             <TouchableOpacity
-                                style={styles.editImageButton}
+                                style={[styles.editImageButton, { backgroundColor: colors.primary }]}
                                 onPress={handlePickImage}
                             >
                                 {uploading ? (
-                                    <ActivityIndicator color="#fff" />
+                                    <ActivityIndicator color="#fff" size="small" />
                                 ) : (
                                     <Text style={styles.editImageIcon}>✏️</Text>
                                 )}
                             </TouchableOpacity>
                         </View>
-                        <Text style={styles.profileName}>
+                        <Text style={[styles.profileName, { color: colors.text }]}>
                             {userInfo.fullName || "No Name"}
                         </Text>
-                        <Text style={styles.profileJoinDate}>{userInfo.joinDate}</Text>
+                        <Text style={[styles.profileJoinDate, { color: colors.textSecondary }]}>
+                            {userInfo.joinDate}
+                        </Text>
                     </View>
 
                     {/* Form Section */}
-                    <View style={styles.formSection}>
+                    <View style={[styles.formSection, { backgroundColor: colors.surface }]}>
                         <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Full Name</Text>
+                            <Text style={[styles.inputLabel, { color: colors.text }]}>Full Name</Text>
                             <TextInput
                                 value={fullName}
                                 onChangeText={setFullName}
-                                style={styles.textInput}
+                                style={[
+                                    styles.textInput,
+                                    {
+                                        borderColor: colors.border,
+                                        backgroundColor: colors.background,
+                                        color: colors.text,
+                                    },
+                                ]}
                                 placeholder="Enter your full name"
+                                placeholderTextColor={colors.textTertiary}
                             />
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Email</Text>
+                            <Text style={[styles.inputLabel, { color: colors.text }]}>Email</Text>
                             <TextInput
                                 value={email}
                                 onChangeText={setEmail}
-                                style={styles.textInput}
+                                style={[
+                                    styles.textInput,
+                                    {
+                                        borderColor: colors.border,
+                                        backgroundColor: colors.background,
+                                        color: colors.text,
+                                    },
+                                ]}
                                 placeholder="Enter your email"
+                                placeholderTextColor={colors.textTertiary}
                                 keyboardType="email-address"
                             />
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Current Password</Text>
+                            <Text style={[styles.inputLabel, { color: colors.text }]}>
+                                Current Password
+                            </Text>
                             <TextInput
                                 value={currentPassword}
                                 onChangeText={setCurrentPassword}
-                                style={styles.textInput}
+                                style={[
+                                    styles.textInput,
+                                    {
+                                        borderColor: colors.border,
+                                        backgroundColor: colors.background,
+                                        color: colors.text,
+                                    },
+                                ]}
                                 placeholder="Enter current password"
+                                placeholderTextColor={colors.textTertiary}
                                 secureTextEntry
                             />
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>New Password</Text>
+                            <Text style={[styles.inputLabel, { color: colors.text }]}>
+                                New Password
+                            </Text>
                             <TextInput
                                 value={newPassword}
                                 onChangeText={setNewPassword}
-                                style={styles.textInput}
+                                style={[
+                                    styles.textInput,
+                                    {
+                                        borderColor: colors.border,
+                                        backgroundColor: colors.background,
+                                        color: colors.text,
+                                    },
+                                ]}
                                 placeholder="Enter new password"
+                                placeholderTextColor={colors.textTertiary}
                                 secureTextEntry
                             />
-                            <Text style={styles.inputHelper}>
+                            <Text style={[styles.inputHelper, { color: colors.textSecondary }]}>
                                 Leave blank to keep your current password.
                             </Text>
                         </View>
                     </View>
 
+                    {/* Save Button Section */}
                     <View style={styles.buttonSection}>
                         <TouchableOpacity
-                            style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+                            style={[
+                                styles.saveButton,
+                                { backgroundColor: colors.primary },
+                                saving && styles.saveButtonDisabled,
+                            ]}
                             onPress={handleSaveChanges}
                             disabled={saving}
                         >
@@ -326,19 +367,31 @@ const Profile = () => {
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
+
+                {/* Floating Theme Toggle Button */}
+                <TouchableOpacity
+                    style={[styles.themeButton, { backgroundColor: colors.primary }]}
+                    onPress={toggleTheme}
+                    activeOpacity={0.8}
+                >
+                    {theme === "light" ? (
+                        <Moon size={24} color="#fff" />
+                    ) : (
+                        <Sun size={24} color="#fff" />
+                    )}
+                </TouchableOpacity>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#F9FAFB" },
+    container: { flex: 1 },
     loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-    loadingText: { marginTop: 12, fontSize: 16, color: "#6B7280" },
+    loadingText: { marginTop: 12, fontSize: 16 },
     profileSection: {
         alignItems: "center",
         paddingVertical: 30,
-        backgroundColor: "#fff",
         marginBottom: 10,
     },
     profileImageContainer: { position: "relative", marginBottom: 12 },
@@ -347,40 +400,49 @@ const styles = StyleSheet.create({
         height: 120,
         borderRadius: 60,
         borderWidth: 3,
-        borderColor: "#E5E7EB",
     },
     editImageButton: {
         position: "absolute",
         bottom: 0,
         right: 0,
-        backgroundColor: "#3B82F6",
         borderRadius: 18,
         padding: 6,
     },
     editImageIcon: { color: "white", fontSize: 14 },
     profileName: { fontSize: 22, fontWeight: "600", marginTop: 10 },
-    profileJoinDate: { fontSize: 14, color: "#6B7280" },
-    formSection: { backgroundColor: "#fff", padding: 20 },
+    profileJoinDate: { fontSize: 14 },
+    formSection: { padding: 20 },
     inputGroup: { marginBottom: 20 },
     inputLabel: { fontSize: 14, fontWeight: "600", marginBottom: 6 },
     textInput: {
         borderWidth: 1,
-        borderColor: "#D1D5DB",
         borderRadius: 8,
         padding: 12,
         fontSize: 16,
-        color: "#111827",
     },
-    inputHelper: { fontSize: 12, color: "#6B7280", marginTop: 4 },
+    inputHelper: { fontSize: 12, marginTop: 4 },
     buttonSection: { padding: 20 },
     saveButton: {
-        backgroundColor: "#10B981",
         paddingVertical: 14,
         borderRadius: 8,
         alignItems: "center",
     },
-    saveButtonDisabled: { backgroundColor: "#9CA3AF" },
+    saveButtonDisabled: { opacity: 0.6 },
     saveButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+    themeButton: {
+        position: "absolute",
+        bottom: 30,
+        right: 20,
+        padding: 16,
+        borderRadius: 28,
+        elevation: 8,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        alignItems: "center",
+        justifyContent: "center",
+    },
 });
 
 export default Profile;

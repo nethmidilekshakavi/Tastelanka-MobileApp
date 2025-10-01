@@ -41,6 +41,15 @@ function TabLayout() {
                 }}
             />
             <Tabs.Screen
+                name="Restaurant"
+                options={{
+                    title: "Restaurant",
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="restaurant" size={size} color={color} />
+                    ),
+                }}
+            />
+            <Tabs.Screen
                 name="Profile"
                 options={{
                     title: 'Account',
