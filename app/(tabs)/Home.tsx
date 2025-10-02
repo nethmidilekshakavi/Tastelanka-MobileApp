@@ -21,6 +21,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useTheme } from '@/context/ThemeContext';
 import { FavoritesContext } from './Favorites';
 
+
 interface Recipe {
     rid?: string;
     title: string;
@@ -64,6 +65,49 @@ const Home = () => {
     const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
     const [showRecipeDetail, setShowRecipeDetail] = useState(false);
     const [currentUser, setCurrentUser] = useState<UserDoc | null>(null);
+
+    // const saveRecipeAsPDF = async (recipe: Recipe) => {
+    //     try {
+    //         // Android storage permission request
+    //         if (Platform.OS === 'android') {
+    //             const granted = await PermissionsAndroid.request(
+    //                 PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+    //                 {
+    //                     title: "Storage Permission",
+    //                     message: "App needs access to your storage to save PDF",
+    //                     buttonPositive: "OK"
+    //                 }
+    //             );
+    //             if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+    //                 Alert.alert("Permission Denied", "Cannot save PDF without storage permission");
+    //                 return;
+    //             }
+    //         }
+    //
+    //         // HTML content generate
+    //         const htmlContent = `
+    //         <h1>${recipe.title}</h1>
+    //         ${recipe.description ? `<p>${recipe.description}</p>` : ""}
+    //         ${recipe.ingredients ? `<h3>Ingredients</h3><ul>${recipe.ingredients.split('\n').map(i => `<li>${i}</li>`).join('')}</ul>` : ""}
+    //         ${recipe.instructions ? `<h3>Instructions</h3><ol>${recipe.instructions.split('\n').map(i => `<li>${i}</li>`).join('')}</ol>` : ""}
+    //     `;
+    //
+    //         const options = {
+    //             html: htmlContent,
+    //             fileName: recipe.title.replace(/\s/g, "_"),
+    //             directory: 'Download', // Download folder on device
+    //         };
+    //
+    //
+    //         Alert.alert("Success", `PDF downloaded to: ${file.filePath}`);
+    //         console.log("PDF Path:", file.filePath);
+    //
+    //     } catch (error) {
+    //         console.error("Error saving PDF:", error);
+    //         Alert.alert("Error", "Failed to save PDF");
+    //     }
+    // };
+
 
     const categories = [
         { name: "Rice & Curry", image: "https://i.pinimg.com/736x/27/58/ca/2758ca3713057831e725c6ba5b9d9f4b.jpg" },
@@ -248,10 +292,13 @@ const Home = () => {
                             )}
 
                             <View style={styles.actionButtons}>
-                                <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.primary }]}>
+                                <TouchableOpacity
+                                    style={[styles.saveButton, { backgroundColor: colors.primary }]}
+                                >
                                     <Icon name="bookmark" size={20} color="#fff" />
                                     <Text style={styles.saveButtonText}>Save Recipe</Text>
                                 </TouchableOpacity>
+
                                 <TouchableOpacity style={[styles.shareButton, { borderColor: colors.primary }]}>
                                     <Icon name="share" size={20} color={colors.primary} />
                                     <Text style={[styles.shareButtonText, { color: colors.primary }]}>Share</Text>
