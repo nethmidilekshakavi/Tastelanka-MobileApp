@@ -54,10 +54,9 @@ const LoginScreen = () => {
                     source={{
                         uri: "https://i.pinimg.com/1200x/24/b5/f5/24b5f5ecd1b11aed22b4b5602c2d4a0a.jpg",
                     }}
-                    style={{ flex: 1 , top:30 }}
+                    style={{ flex: 1, top: 30 }}
                     resizeMode="cover"
                 >
-                    {/* Decorative curved shapes */}
                     <View
                         className="absolute top-20 right-0 w-40 h-40 rounded-full opacity-20"
                         style={{ backgroundColor: "rgba(255,255,255,0.3)" }}
@@ -70,8 +69,6 @@ const LoginScreen = () => {
                         className="absolute top-10 right-20 w-16 h-16 rounded-full opacity-25"
                         style={{ backgroundColor: "rgba(255,255,255,0.3)" }}
                     />
-
-                    {/* Curved bottom border */}
                     <View
                         className="absolute bottom-0 left-0 right-0 h-20"
                         style={{
@@ -81,18 +78,17 @@ const LoginScreen = () => {
                         }}
                     />
                 </ImageBackground>
-
             </View>
 
             {/* Form section */}
-            <View className="flex-1 px-8 -mt-4 top-20">
+            <View className="flex-1 px-8 -mt-4 top-6">
+                {/* Header */}
+                <View className="mb-6">
+                    <Text className="text-black text-3xl mb-1">Sign in...</Text>
+                </View>
 
                 {/* Email Input */}
                 <View className="mb-6">
-                    <View className="absolute bottom-20 left-1">
-                        <Text className="text-black text-3xl  mb-1">Sign in...</Text>
-                    </View>
-
                     <Text className="text-gray-600 text-sm mb-2 ml-1 top-4">Email</Text>
                     <View className="border-b border-gray-200 pb-2">
                         <TextInput
@@ -122,8 +118,8 @@ const LoginScreen = () => {
                     </View>
                 </View>
 
-                {/* Remember Me and Forgot Password */}
-                <View className="flex-row justify-between items-center mb-8 top-4 top-4">
+                {/* Remember Me & Forgot Password */}
+                <View className="flex-row justify-between items-center mb-8 top-4">
                     <TouchableOpacity
                         className="flex-row items-center"
                         onPress={() => setRememberMe(!rememberMe)}
@@ -137,7 +133,7 @@ const LoginScreen = () => {
                                 <Text className="text-white text-xs text-center">✓</Text>
                             )}
                         </View>
-                        <Text className="text-gray-600 text-sm ">Remember Me</Text>
+                        <Text className="text-gray-600 text-sm">Remember Me</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity>
@@ -170,20 +166,18 @@ const LoginScreen = () => {
                     )}
                 </TouchableOpacity>
 
-                {/* Social Login Section */}
+                {/* Social Login */}
                 <View className="items-center mb-6 top-4">
                     <Text className="text-gray-500 text-sm mb-4">Or continue with</Text>
-
-                    <View className="flex-row justify-center space-x-4 top-4  ">
-                        {/* Google Login */}
+                    <View className="flex-row justify-center space-x-4">
                         <TouchableOpacity
-                            className="w-14 h-14 rounded-full justify-center items-center right-5"
-                            onPress={() => {
+                            className="w-14 h-14 rounded-full justify-center items-center"
+                            onPress={() =>
                                 Alert.alert(
                                     "Google Login",
                                     "Google login functionality will be implemented here"
-                                );
-                            }}
+                                )
+                            }
                         >
                             <Image
                                 source={{
@@ -194,15 +188,14 @@ const LoginScreen = () => {
                             />
                         </TouchableOpacity>
 
-                        {/* Facebook Login */}
                         <TouchableOpacity
                             className="w-14 h-14 rounded-full justify-center items-center"
-                            onPress={() => {
+                            onPress={() =>
                                 Alert.alert(
                                     "Facebook Login",
                                     "Facebook login functionality will be implemented here"
-                                );
-                            }}
+                                )
+                            }
                         >
                             <Image
                                 source={{
@@ -213,19 +206,18 @@ const LoginScreen = () => {
                             />
                         </TouchableOpacity>
 
-                        {/* Twitter Login */}
                         <TouchableOpacity
-                            className="w-14 h-14 rounded-full justify-center items-center left-6"
-                            onPress={() => {
+                            className="w-14 h-14 rounded-full justify-center items-center"
+                            onPress={() =>
                                 Alert.alert(
-                                    "Facebook Login",
-                                    "Facebook login functionality will be implemented here"
-                                );
-                            }}
+                                    "Twitter Login",
+                                    "Twitter login functionality will be implemented here"
+                                )
+                            }
                         >
                             <Image
                                 source={{
-                                    uri: "https://i.pinimg.com/736x/77/f1/0e/77f10efe301b3ba26b62d50e61fdb10a.jpg",
+                                    uri: "https://i.pinimg.com/736x/98/0f/96/980f96304edcd0b16ed3b579d81c7a9e.jpg",
                                 }}
                                 className="w-10 h-10"
                                 resizeMode="contain"
@@ -238,7 +230,7 @@ const LoginScreen = () => {
                 <View className="items-center top-5">
                     <Pressable onPress={() => router.push("/register")}>
                         <Text className="text-gray-600 text-base">
-                            Don't have an Account ?{" "}
+                            Don't have an Account?{" "}
                             <Text className="text-green-500 font-semibold">Sign up</Text>
                         </Text>
                     </Pressable>
