@@ -1,4 +1,4 @@
-import React, { useEffect, useState, createContext } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
     View,
     Text,
@@ -11,13 +11,15 @@ import {
     SafeAreaView,
     Modal,
 } from "react-native";
-import { Search, Bell, MessageCircle } from "lucide-react-native";
+import { Search, Bell, MessageCircle, Moon, Sun } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
 import { db } from "@/config/firebaseConfig";
 import { collection, query, orderBy, onSnapshot, where, getDoc, doc } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { useTheme } from '@/context/ThemeContext';
+import { FavoritesContext } from './Favorites';
 
 interface Recipe {
     rid?: string;
@@ -30,13 +32,13 @@ interface Recipe {
     instructions?: string;
 }
 
-interface User {
+type UserDoc = {
     uid: string;
     fullName?: string;
     email?: string;
     role?: string;
-    profilePic?: string | null;
-}
+    photoURL?: string | null;
+};
 
 const ASSET_IMAGES = [
     { id: 1, name: "Milk Rice", source: require("../../assets/images/rice & curry/kribath.jpg") },
@@ -48,25 +50,14 @@ const ASSET_IMAGES = [
     { id: 7, name: "cutlut", source: require("../../assets/images/streetFoods/56711cde3cf86f455aa5d2ae59c5f5c8.jpg") },
 ];
 
-type UserDoc = {
-    uid: string;
-    fullName?: string;
-    email?: string;
-    role?: string;
-    photoURL?: string | null;
-};
-
-interface AuthContextType {
-    user: User | null;
-    login: (user: User) => void;
-    logout: () => void;
-}
-
-const AuthContext = createContext<AuthContextType | null>(null);
-
 const Home = () => {
     const router = useRouter();
     const navigation = useNavigation();
+    const { theme, toggleTheme, colors } = useTheme();
+
+    // Use Favorites Context instead of local state
+    const { favoriteRecipes, toggleFavorite } = useContext(FavoritesContext);
+
     const [recipes, setRecipes] = useState<Recipe[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState<string>("");
@@ -81,21 +72,6 @@ const Home = () => {
         { name: "Sweets & Desserts", image: "https://i.pinimg.com/736x/a9/06/f8/a906f8c16c19085fcc1f974032d72eed.jpg" },
         { name: "Vegetarian & Healthy", image: "https://i.pinimg.com/1200x/f0/7c/5a/f07c5a46b6a3072e36a457b495bb827b.jpg" },
     ];
-
-    const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
-
-    const toggleFavorite = (recipe: Recipe) => {
-        setFavoriteRecipes(prev => {
-            if (prev.find(r => r.rid === recipe.rid)) {
-                // Remove if already favorite
-                return prev.filter(r => r.rid !== recipe.rid);
-            } else {
-                // Add to favorites
-                return [...prev, recipe];
-            }
-        });
-    };
-
 
     useEffect(() => {
         const auth = getAuth();
@@ -170,21 +146,19 @@ const Home = () => {
                 presentationStyle="pageSheet"
                 onRequestClose={closeRecipeDetail}
             >
-                <SafeAreaView style={styles.detailContainer}>
-                    {/* Header */}
-                    <View style={styles.detailHeader}>
+                <SafeAreaView style={[styles.detailContainer, { backgroundColor: colors.background }]}>
+                    <View style={[styles.detailHeader, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
                         <TouchableOpacity
                             onPress={closeRecipeDetail}
-                            style={styles.backButton}
+                            style={[styles.backButton, { backgroundColor: colors.placeholder }]}
                         >
-                            <Icon name="arrow-back" size={24} color="#374151" />
+                            <Icon name="arrow-back" size={24} color={colors.icon} />
                         </TouchableOpacity>
-                        <Text style={styles.detailHeaderTitle}>Recipe Details</Text>
+                        <Text style={[styles.detailHeaderTitle, { color: colors.text }]}>Recipe Details</Text>
                         <View style={{ width: 24 }} />
                     </View>
 
                     <ScrollView style={styles.detailContent} showsVerticalScrollIndicator={false}>
-                        {/* Recipe Image */}
                         <View style={styles.detailImageContainer}>
                             {imageSource ? (
                                 <Image
@@ -193,55 +167,56 @@ const Home = () => {
                                     resizeMode="cover"
                                 />
                             ) : (
-                                <View style={styles.detailImagePlaceholder}>
-                                    <Icon name="restaurant-menu" size={60} color="#9CA3AF" />
-                                    <Text style={styles.detailNoImageText}>No Image Available</Text>
+                                <View style={[styles.detailImagePlaceholder, { backgroundColor: colors.placeholder }]}>
+                                    <Icon name="restaurant-menu" size={60} color={colors.emptyState} />
+                                    <Text style={[styles.detailNoImageText, { color: colors.emptyState }]}>No Image Available</Text>
                                 </View>
                             )}
                             {selectedRecipe.category && (
-                                <View style={styles.detailCategoryBadge}>
-                                    <Text style={styles.detailCategoryText}>{selectedRecipe.category}</Text>
+                                <View style={[styles.detailCategoryBadge, { backgroundColor: colors.categoryBadge }]}>
+                                    <Text style={[styles.detailCategoryText, { color: colors.categoryBadgeText }]}>
+                                        {selectedRecipe.category}
+                                    </Text>
                                 </View>
                             )}
                         </View>
 
-                        {/* Recipe Info */}
                         <View style={styles.detailInfo}>
-                            <Text style={styles.detailTitle}>{selectedRecipe.title}</Text>
+                            <Text style={[styles.detailTitle, { color: colors.text }]}>{selectedRecipe.title}</Text>
 
                             {selectedRecipe.description && (
-                                <Text style={styles.detailDescription}>{selectedRecipe.description}</Text>
+                                <Text style={[styles.detailDescription, { color: colors.textSecondary }]}>
+                                    {selectedRecipe.description}
+                                </Text>
                             )}
 
-                            {/* Recipe Stats */}
-                            <View style={styles.detailStats}>
+                            <View style={[styles.detailStats, { backgroundColor: colors.surface }]}>
                                 <View style={styles.detailStatItem}>
-                                    <Icon name="schedule" size={20} color="#6B7280" />
-                                    <Text style={styles.detailStatText}>30 minutes</Text>
+                                    <Icon name="schedule" size={20} color={colors.statText} />
+                                    <Text style={[styles.detailStatText, { color: colors.statText }]}>30 minutes</Text>
                                 </View>
                                 <View style={styles.detailStatItem}>
-                                    <Icon name="people" size={20} color="#6B7280" />
-                                    <Text style={styles.detailStatText}>2-4 servings</Text>
+                                    <Icon name="people" size={20} color={colors.statText} />
+                                    <Text style={[styles.detailStatText, { color: colors.statText }]}>2-4 servings</Text>
                                 </View>
                                 <View style={styles.detailStatItem}>
                                     <Icon name="star" size={20} color="#F59E0B" />
-                                    <Text style={styles.detailStatText}>4.5/5</Text>
+                                    <Text style={[styles.detailStatText, { color: colors.statText }]}>4.5/5</Text>
                                 </View>
                             </View>
 
-                            {/* Ingredients */}
                             {selectedRecipe.ingredients && (
                                 <View style={styles.detailSection}>
                                     <View style={styles.detailSectionHeader}>
-                                        <Icon name="shopping-cart" size={20} color="#3B82F6" />
-                                        <Text style={styles.detailSectionTitle}>Ingredients</Text>
+                                        <Icon name="shopping-cart" size={20} color={colors.primary} />
+                                        <Text style={[styles.detailSectionTitle, { color: colors.text }]}>Ingredients</Text>
                                     </View>
-                                    <View style={styles.ingredientsContainer}>
+                                    <View style={[styles.ingredientsContainer, { backgroundColor: colors.surface }]}>
                                         {selectedRecipe.ingredients.split('\n').map((ingredient, index) => (
                                             ingredient.trim() && (
                                                 <View key={index} style={styles.ingredientItem}>
-                                                    <View style={styles.ingredientBullet} />
-                                                    <Text style={styles.ingredientText}>{ingredient.trim()}</Text>
+                                                    <View style={[styles.ingredientBullet, { backgroundColor: colors.primary }]} />
+                                                    <Text style={[styles.ingredientText, { color: colors.text }]}>{ingredient.trim()}</Text>
                                                 </View>
                                             )
                                         ))}
@@ -249,21 +224,22 @@ const Home = () => {
                                 </View>
                             )}
 
-                            {/* Instructions */}
                             {selectedRecipe.instructions && (
                                 <View style={styles.detailSection}>
                                     <View style={styles.detailSectionHeader}>
-                                        <Icon name="list-alt" size={20} color="#10B981" />
-                                        <Text style={styles.detailSectionTitle}>Instructions</Text>
+                                        <Icon name="list-alt" size={20} color={colors.secondary} />
+                                        <Text style={[styles.detailSectionTitle, { color: colors.text }]}>Instructions</Text>
                                     </View>
-                                    <View style={styles.instructionsContainer}>
+                                    <View style={[styles.instructionsContainer, { backgroundColor: colors.surface }]}>
                                         {selectedRecipe.instructions.split('\n').map((instruction, index) => (
                                             instruction.trim() && (
                                                 <View key={index} style={styles.instructionItem}>
-                                                    <View style={styles.instructionNumber}>
+                                                    <View style={[styles.instructionNumber, { backgroundColor: colors.secondary }]}>
                                                         <Text style={styles.instructionNumberText}>{index + 1}</Text>
                                                     </View>
-                                                    <Text style={styles.instructionText}>{instruction.trim()}</Text>
+                                                    <Text style={[styles.instructionText, { color: colors.text }]}>
+                                                        {instruction.trim()}
+                                                    </Text>
                                                 </View>
                                             )
                                         ))}
@@ -271,15 +247,14 @@ const Home = () => {
                                 </View>
                             )}
 
-                            {/* Action Buttons */}
                             <View style={styles.actionButtons}>
-                                <TouchableOpacity style={styles.saveButton}>
+                                <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.primary }]}>
                                     <Icon name="bookmark" size={20} color="#fff" />
                                     <Text style={styles.saveButtonText}>Save Recipe</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={styles.shareButton}>
-                                    <Icon name="share" size={20} color="#3B82F6" />
-                                    <Text style={styles.shareButtonText}>Share</Text>
+                                <TouchableOpacity style={[styles.shareButton, { borderColor: colors.primary }]}>
+                                    <Icon name="share" size={20} color={colors.primary} />
+                                    <Text style={[styles.shareButtonText, { color: colors.primary }]}>Share</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -291,10 +266,11 @@ const Home = () => {
 
     const renderRecipeCard = ({ item }: { item: Recipe }) => {
         const imageSource = getRecipeImageSource(item);
+        const isFavorite = favoriteRecipes.find(r => r.rid === item.rid);
 
         return (
             <TouchableOpacity
-                style={styles.card}
+                style={[styles.card, { backgroundColor: colors.card }]}
                 activeOpacity={0.7}
             >
                 <View style={styles.imageContainer}>
@@ -305,65 +281,65 @@ const Home = () => {
                             resizeMode="cover"
                         />
                     ) : (
-                        <View style={styles.placeholder}>
-                            <Icon name="restaurant-menu" size={40} color="#9CA3AF" />
-                            <Text style={styles.noImageText}>No Image</Text>
+                        <View style={[styles.placeholder, { backgroundColor: colors.placeholder }]}>
+                            <Icon name="restaurant-menu" size={40} color={colors.emptyState} />
+                            <Text style={[styles.noImageText, { color: colors.emptyState }]}>No Image</Text>
                         </View>
                     )}
 
                     {item.category && (
-                        <View style={styles.categoryBadge}>
-                            <Text style={styles.categoryBadgeText}>{item.category}</Text>
+                        <View style={[styles.categoryBadge, { backgroundColor: colors.categoryBadge }]}>
+                            <Text style={[styles.categoryBadgeText, { color: colors.categoryBadgeText }]}>
+                                {item.category}
+                            </Text>
                         </View>
                     )}
 
-                    {/* Favorite Button */}
                     <TouchableOpacity
                         style={{
                             position: "absolute",
                             top: 8,
                             right: 8,
-                            backgroundColor: "rgba(255,255,255,0.9)",
+                            backgroundColor: colors.categoryBadge,
                             padding: 6,
                             borderRadius: 20,
                         }}
                         onPress={() => toggleFavorite(item)}
                     >
                         <Icon
-                            name={favoriteRecipes.find(r => r.rid === item.rid) ? "favorite" : "favorite-border"}
+                            name={isFavorite ? "favorite" : "favorite-border"}
                             size={20}
-                            color={favoriteRecipes.find(r => r.rid === item.rid) ? "#EF4444" : "#6B7280"}
+                            color={isFavorite ? "#EF4444" : colors.statText}
                         />
                     </TouchableOpacity>
                 </View>
 
                 <View style={styles.cardContent}>
-                    <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
+                    <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
                     {item.description && (
-                        <Text style={styles.description} numberOfLines={2}>
+                        <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
                             {item.description}
                         </Text>
                     )}
 
                     <View style={styles.recipeStats}>
                         <View style={styles.statItem}>
-                            <Icon name="schedule" size={14} color="#6B7280" />
-                            <Text style={styles.statText}>30 min</Text>
+                            <Icon name="schedule" size={14} color={colors.statText} />
+                            <Text style={[styles.statText, { color: colors.statText }]}>30 min</Text>
                         </View>
                         <View style={styles.statItem}>
-                            <Icon name="people" size={14} color="#6B7280" />
-                            <Text style={styles.statText}>2-4 servings</Text>
+                            <Icon name="people" size={14} color={colors.statText} />
+                            <Text style={[styles.statText, { color: colors.statText }]}>2-4 servings</Text>
                         </View>
                     </View>
 
-                    {/* Recipe Button */}
                     <TouchableOpacity
                         style={{
                             marginTop: 8,
-                            bottom:20,
+                            bottom: 20,
                             backgroundColor: "transparent",
                             borderWidth: 1,
-                            borderColor: "#4CAF50", // Keep the green as border
+                            borderColor: colors.primary,
                             paddingVertical: 8,
                             borderRadius: 8,
                             flexDirection: "row",
@@ -373,8 +349,8 @@ const Home = () => {
                         }}
                         onPress={() => handleRecipePress(item)}
                     >
-                        <Icon name="restaurant-menu" size={16} color="#4CAF50" /> {/* Changed icon color */}
-                        <Text style={{ color: "#4CAF50", fontWeight: "600" }}>Recipe</Text> {/* Changed text color */}
+                        <Icon name="restaurant-menu" size={16} color={colors.primary} />
+                        <Text style={{ color: colors.primary, fontWeight: "600" }}>Recipe</Text>
                     </TouchableOpacity>
                 </View>
             </TouchableOpacity>
@@ -386,9 +362,8 @@ const Home = () => {
     );
 
     return (
-        <SafeAreaView style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+            <View style={[styles.header, { backgroundColor: theme === 'light' ? colors.primary : colors.headerGradient }]}>
                 <View style={styles.headerLeft}>
                     <TouchableOpacity>
                         <Image
@@ -398,51 +373,62 @@ const Home = () => {
                     </TouchableOpacity>
                     <View style={{ marginLeft: 14 }}>
                         <Text style={styles.headerTitle}>Hello, {currentUser?.fullName || "Guest"}!</Text>
-                        <Text style={styles.headerSubtitle}>Welcome to TasteLanka 🇱🇰🌾</Text>
+                        <Text style={[styles.headerSubtitle, { color: theme === 'light' ? '#D1D5DB' : colors.textSecondary }]}>
+                            Welcome to TasteLanka 🇱🇰🌾
+                        </Text>
                     </View>
                 </View>
 
-                {/* Right: Bell + Message Icons */}
                 <View style={styles.headerRight}>
+                    <TouchableOpacity
+                        style={styles.iconButton}
+                        onPress={toggleTheme}
+                    >
+                        {theme === 'light' ? (
+                            <Moon size={24} color="white" />
+                        ) : (
+                            <Sun size={24} color="white" />
+                        )}
+                    </TouchableOpacity>
+
                     <TouchableOpacity style={styles.iconButton}>
                         <Bell size={24} color="white" />
-                        <View style={styles.notificationDot} />
+                        <View style={[styles.notificationDot, { backgroundColor: colors.notificationDot }]} />
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.iconButton}>
                         <MessageCircle size={24} color="white" />
-                        <View style={[styles.notificationDot, { backgroundColor: "#34D399" }]} />
+                        <View style={[styles.notificationDot, { backgroundColor: colors.messageDot }]} />
                     </TouchableOpacity>
                 </View>
             </View>
 
-            {/* Search Bar */}
-            <View style={styles.searchBar}>
-                <Search size={20} color="gray" style={{ marginRight: 8 }} />
+            <View style={[styles.searchBar, { backgroundColor: colors.searchBar }]}>
+                <Search size={20} color={colors.textSecondary} style={{ marginRight: 8 }} />
                 <TextInput
                     placeholder="Search Any Recipe.."
-                    style={styles.searchInput}
+                    placeholderTextColor={colors.textTertiary}
+                    style={[styles.searchInput, { color: colors.text }]}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                 />
                 {searchQuery.length > 0 && (
                     <TouchableOpacity onPress={() => setSearchQuery("")}>
-                        <Icon name="clear" size={20} color="gray" />
+                        <Icon name="clear" size={20} color={colors.textSecondary} />
                     </TouchableOpacity>
                 )}
             </View>
 
-            <ScrollView contentContainerStyle={{ paddingBottom: 100,top:50 }}>
-                <Text style={[styles.sectionDescription, { marginBottom: 20, paddingHorizontal: 20 }]}>
+            <ScrollView contentContainerStyle={{ paddingBottom: 100, top: 50 }}>
+                <Text style={[styles.sectionDescription, { color: colors.textSecondary, marginBottom: 20, paddingHorizontal: 20 }]}>
                     Explore the rich and delicious flavors of Sri Lankan cuisine. Find your favorite dishes and try something new!
                 </Text>
 
-                {/* Categories */}
                 <View style={{ marginBottom: 20, paddingHorizontal: 20 }}>
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Categories</Text>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Categories</Text>
                         <TouchableOpacity onPress={() => setSelectedCategory(null)}>
-                            <Text style={styles.linkText}>See All</Text>
+                            <Text style={[styles.linkText, { color: colors.primary }]}>See All</Text>
                         </TouchableOpacity>
                     </View>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -454,7 +440,7 @@ const Home = () => {
                                     {
                                         marginRight: 20,
                                         borderWidth: selectedCategory === category.name ? 3 : 0,
-                                        borderColor: "#4CAF50",
+                                        borderColor: colors.primary,
                                     },
                                 ]}
                                 onPress={() =>
@@ -469,33 +455,31 @@ const Home = () => {
                                     style={styles.categoryImage}
                                     resizeMode="cover"
                                 />
-                                <View style={styles.categoryOverlay}>
+                                <View style={[styles.categoryOverlay, { backgroundColor: colors.overlay }]}>
                                     <Text style={styles.categoryText}>{category.name}</Text>
                                 </View>
                             </TouchableOpacity>
-
                         ))}
                     </ScrollView>
                 </View>
 
-                {/* Recipes Section */}
                 <View style={{ paddingHorizontal: 20 }}>
                     <View style={styles.recipesHeader}>
-                        <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>
+                        <Text style={[styles.sectionTitle, { marginBottom: 0, color: colors.text }]}>
                             {selectedCategory ? `${selectedCategory} Recipes` : "All Recipes"}
                         </Text>
-                        <Text style={styles.recipeCount}>
+                        <Text style={[styles.recipeCount, { color: colors.textSecondary }]}>
                             {filteredRecipes.length} recipe{filteredRecipes.length !== 1 ? 's' : ''}
                         </Text>
                     </View>
 
                     {filteredRecipes.length === 0 ? (
                         <View style={styles.emptyState}>
-                            <Icon name="search-off" size={48} color="#9CA3AF" />
-                            <Text style={styles.emptyStateTitle}>
+                            <Icon name="search-off" size={48} color={colors.emptyState} />
+                            <Text style={[styles.emptyStateTitle, { color: colors.text }]}>
                                 {searchQuery ? "No recipes found" : "No recipes available"}
                             </Text>
-                            <Text style={styles.emptyStateSubtitle}>
+                            <Text style={[styles.emptyStateSubtitle, { color: colors.textSecondary }]}>
                                 {searchQuery
                                     ? `Try searching for something else or clear your search`
                                     : "Add some recipes to get started"
@@ -503,12 +487,11 @@ const Home = () => {
                             </Text>
                             {searchQuery && (
                                 <TouchableOpacity
-                                    style={styles.clearSearchButton}
+                                    style={[styles.clearSearchButton, { backgroundColor: colors.primary }]}
                                     onPress={() => setSearchQuery("")}
                                 >
                                     <Text style={styles.clearSearchButtonText}>Clear Search</Text>
                                 </TouchableOpacity>
-
                             )}
                         </View>
                     ) : (
@@ -525,16 +508,6 @@ const Home = () => {
                 </View>
             </ScrollView>
 
-            {/* Add Recipe Button */}
-            <TouchableOpacity
-                style={styles.addButton}
-                onPress={() => navigation.navigate("RecipeManagement")}
-                activeOpacity={0.8}
-            >
-                <Icon name="add" size={28} color="#fff" />
-            </TouchableOpacity>
-
-            {/* Recipe Detail Modal */}
             {renderRecipeDetail()}
         </SafeAreaView>
     );
@@ -542,8 +515,9 @@ const Home = () => {
 
 export default Home;
 
+// Styles remain the same...
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#F8FAFC",top:30 },
+    container: { flex: 1, top: 30 },
     header: {
         flexDirection: "row",
         justifyContent: "space-between",
@@ -551,16 +525,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 50,
         paddingBottom: 20,
-        height:170,
-        backgroundColor: "#4CAF50",
+        height: 170,
         borderBottomLeftRadius: 20,
         borderBottomRightRadius: 20,
     },
-    headerLeft: { flexDirection: "row", alignItems: "center" ,top:2},
-    avatar: { width: 60, height: 60, borderRadius: 25,bottom:30 },
-    headerTitle: { color: "#fff", fontSize: 22, fontWeight: "700" ,bottom:30},
-    headerSubtitle: { color: "#D1D5DB", fontSize: 16,bottom:25 },
-    headerRight: { flexDirection: "row", alignItems: "center" ,bottom:20},
+    headerLeft: { flexDirection: "row", alignItems: "center", top: 2 },
+    avatar: { width: 60, height: 60, borderRadius: 25, bottom: 30 },
+    headerTitle: { color: "#fff", fontSize: 22, fontWeight: "700", bottom: 30 },
+    headerSubtitle: { fontSize: 16, bottom: 25 },
+    headerRight: { flexDirection: "row", alignItems: "center", bottom: 20 },
     iconButton: { marginLeft: 16, position: "relative" },
     notificationDot: {
         position: "absolute",
@@ -569,17 +542,15 @@ const styles = StyleSheet.create({
         width: 10,
         height: 10,
         borderRadius: 5,
-        backgroundColor: "#EF4444",
         borderWidth: 1,
         borderColor: "#fff",
     },
     searchBar: {
-        position: 'absolute', // add this
+        position: 'absolute',
         left: 16,
         right: 16,
-        top:130,
+        top: 130,
         flexDirection: "row",
-        backgroundColor: "white",
         padding: 12,
         borderRadius: 12,
         alignItems: "center",
@@ -590,93 +561,66 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         zIndex: 100,
     },
-
-    searchInput: { flex: 1, fontSize: 16, color: "#1F2937" },
-    sectionDescription: {
-        fontSize: 14,
-        color: "#6B7280",
-        marginBottom:10 ,
-
-        lineHeight: 20,
-    },
+    searchInput: { flex: 1, fontSize: 16 },
+    sectionDescription: { fontSize: 14, marginBottom: 10, lineHeight: 20 },
     sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-    sectionTitle: { fontSize: 18, fontWeight: "bold", color: "#1F2937" },
-    linkText: { color: "#4CAF50", fontSize: 14, fontWeight: "600" },
+    sectionTitle: { fontSize: 18, fontWeight: "bold" },
+    linkText: { fontSize: 14, fontWeight: "600" },
     categoryCard: { width: 120, height: 80, borderRadius: 12, overflow: "hidden", marginRight: 16 },
     categoryImage: { width: "100%", height: "100%" },
-    categoryOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0,0,0,0.4)",
-        justifyContent: "center",
-        alignItems: "center",
-    },
+    categoryOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: "center", alignItems: "center" },
     categoryText: { color: "white", fontSize: 12, fontWeight: "bold", textAlign: "center" },
     recipesHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
-    recipeCount: { fontSize: 14, color: "#6B7280", fontWeight: "500" },
+    recipeCount: { fontSize: 14, fontWeight: "500" },
     image: { width: "100%", height: "100%" },
-    placeholder: { width: "100%", height: "100%", justifyContent: "center", alignItems: "center", backgroundColor: "#F1F5F9" },
-    noImageText: { color: "#9CA3AF", fontSize: 12, marginTop: 4 },
-    categoryBadge: { position: "absolute", top: 8, right: 8, backgroundColor: "rgba(255, 255, 255, 0.95)", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
-    categoryBadgeText: { fontSize: 10, fontWeight: "600", color: "#374151" },
+    placeholder: { width: "100%", height: "100%", justifyContent: "center", alignItems: "center" },
+    noImageText: { fontSize: 12, marginTop: 4 },
+    categoryBadge: { position: "absolute", top: 8, right: 8, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
+    categoryBadgeText: { fontSize: 10, fontWeight: "600" },
     statItem: { flexDirection: "row", alignItems: "center", gap: 4 },
-    statText: { fontSize: 11, color: "#6B7280", fontWeight: "500" },
-    viewButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: "#EEF2FF", borderRadius: 8 },
-    viewButtonText: { color: "#4CAF50", fontSize: 12, fontWeight: "600" },
+    statText: { fontSize: 11, fontWeight: "500" },
     list: { paddingBottom: 20 },
-    addButton: { position: "absolute", bottom: 30, right: 20, backgroundColor: "#4CAF50", padding: 16, borderRadius: 28, elevation: 8, shadowColor: "#4CAF50", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
     emptyState: { alignItems: "center", justifyContent: "center", paddingVertical: 60, paddingHorizontal: 40 },
-    emptyStateTitle: { fontSize: 18, fontWeight: "600", color: "#374151", marginTop: 16, marginBottom: 8 },
-    emptyStateSubtitle: { fontSize: 14, color: "#9CA3AF", textAlign: "center", lineHeight: 20 },
-    clearSearchButton: { backgroundColor: "#", paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8, marginTop: 16 },
+    emptyStateTitle: { fontSize: 18, fontWeight: "600", marginTop: 16, marginBottom: 8 },
+    emptyStateSubtitle: { fontSize: 14, textAlign: "center", lineHeight: 20 },
+    clearSearchButton: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8, marginTop: 16 },
     clearSearchButtonText: { color: "#fff", fontWeight: "600", fontSize: 14 },
-
-    detailContainer: { flex: 1, backgroundColor: "#F8FAFC" },
-    detailHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: 16,
-        paddingTop: 50,
-        backgroundColor: "#fff",
-        borderBottomWidth: 1,
-        borderBottomColor: "#E5E7EB"
-    },
-    backButton: { padding: 8, borderRadius: 8, backgroundColor: "#F3F4F6" },
-    detailHeaderTitle: { fontSize: 18, fontWeight: "600", color: "#374151" },
+    detailContainer: { flex: 1 },
+    detailHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 16, paddingTop: 50, borderBottomWidth: 1 },
+    backButton: { padding: 8, borderRadius: 8 },
+    detailHeaderTitle: { fontSize: 18, fontWeight: "600" },
     detailContent: { flex: 1 },
     detailImageContainer: { position: "relative", height: 250 },
     detailImage: { width: "100%", height: "100%" },
-    detailImagePlaceholder: { width: "100%", height: "100%", justifyContent: "center", alignItems: "center", backgroundColor: "#F1F5F9" },
-    detailNoImageText: { color: "#9CA3AF", fontSize: 16, marginTop: 8 },
-    detailCategoryBadge: { position: "absolute", top: 16, right: 16, backgroundColor: "rgba(255, 255, 255, 0.95)", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16 },
-    detailCategoryText: { fontSize: 12, fontWeight: "600", color: "#374151" },
+    detailImagePlaceholder: { width: "100%", height: "100%", justifyContent: "center", alignItems: "center" },
+    detailNoImageText: { fontSize: 16, marginTop: 8 },
+    detailCategoryBadge: { position: "absolute", top: 16, right: 16, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16 },
+    detailCategoryText: { fontSize: 12, fontWeight: "600" },
     detailInfo: { padding: 20 },
-    detailTitle: { fontSize: 24, fontWeight: "bold", color: "#1E293B", marginBottom: 8 },
-    detailDescription: { fontSize: 16, color: "#6B7280", lineHeight: 24, marginBottom: 20 },
-    detailStats: { flexDirection: "row", justifyContent: "space-around", marginBottom: 24, backgroundColor: "#fff", padding: 16, borderRadius: 12, elevation: 2 },
+    detailTitle: { fontSize: 24, fontWeight: "bold", marginBottom: 8 },
+    detailDescription: { fontSize: 16, lineHeight: 24, marginBottom: 20 },
+    detailStats: { flexDirection: "row", justifyContent: "space-around", marginBottom: 24, padding: 16, borderRadius: 12, elevation: 2 },
     detailStatItem: { alignItems: "center", gap: 4 },
-    detailStatText: { fontSize: 14, color: "#6B7280", fontWeight: "500" },
+    detailStatText: { fontSize: 14, fontWeight: "500" },
     detailSection: { marginBottom: 24 },
     detailSectionHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
-    detailSectionTitle: { fontSize: 18, fontWeight: "600", color: "#374151" },
-    ingredientsContainer: { backgroundColor: "#fff", padding: 16, borderRadius: 12, elevation: 2 },
+    detailSectionTitle: { fontSize: 18, fontWeight: "600" },
+    ingredientsContainer: { padding: 16, borderRadius: 12, elevation: 2 },
     ingredientItem: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8 },
-    ingredientBullet: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#4CAF50" },
-    ingredientText: { fontSize: 14, color: "#374151", flex: 1 },
-    instructionsContainer: { backgroundColor: "#fff", padding: 16, borderRadius: 12, elevation: 2 },
+    ingredientBullet: { width: 6, height: 6, borderRadius: 3 },
+    ingredientText: { fontSize: 14, flex: 1 },
+    instructionsContainer: { padding: 16, borderRadius: 12, elevation: 2 },
     instructionItem: { flexDirection: "row", gap: 12, paddingVertical: 8 },
-    instructionNumber: { width: 24, height: 24, borderRadius: 12, backgroundColor: "#10B981", justifyContent: "center", alignItems: "center" },
+    instructionNumber: { width: 24, height: 24, borderRadius: 12, justifyContent: "center", alignItems: "center" },
     instructionNumberText: { fontSize: 12, fontWeight: "bold", color: "#fff" },
-    instructionText: { fontSize: 14, color: "#374151", flex: 1, lineHeight: 20 },
+    instructionText: { fontSize: 14, flex: 1, lineHeight: 20 },
     actionButtons: { flexDirection: "row", gap: 12, marginTop: 20 },
-    saveButton: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#4CAF50", paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12 },
+    saveButton: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12 },
     saveButtonText: { color: "#fff", fontSize: 14, fontWeight: "600" },
-    shareButton: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#", paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, borderWidth: 1, borderColor: "#4CAF50" },
-    shareButtonText: { color: "#4CAF50", fontSize: 14, fontWeight: "600" },
-
+    shareButton: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, borderWidth: 1 },
+    shareButtonText: { fontSize: 14, fontWeight: "600" },
     card: {
         flex: 1,
-        backgroundColor: "#fff",
         margin: 6,
         borderRadius: 16,
         overflow: "hidden",
@@ -689,47 +633,9 @@ const styles = StyleSheet.create({
         maxWidth: '48%',
         minWidth: 150,
     },
-
-
-    imageContainer: {
-        position: "relative",
-        height: 130,
-        width: '100%'
-    },
-
-
-    cardContent: {
-        padding: 12,
-        height: 160,
-        justifyContent: 'space-between',
-        flex: 1
-    },
-
-
-    title: {
-        fontWeight: "700",
-        fontSize: 16,
-        color: "#1E293B",
-        marginBottom: 4,
-        height: 35,
-        textAlignVertical: 'top'
-    },
-
-    description: {
-        fontSize: 12,
-        color: "#6B7280",
-        lineHeight: 16,
-        marginBottom: 8,
-        height: 30,
-        textAlignVertical: 'top'
-    },
-
-    recipeStats: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginBottom:10,
-        height: 20,
-        bottom:8
-    },
-
+    imageContainer: { position: "relative", height: 130, width: '100%' },
+    cardContent: { padding: 12, height: 160, justifyContent: 'space-between', flex: 1 },
+    title: { fontWeight: "700", fontSize: 16, marginBottom: 4, height: 35, textAlignVertical: 'top' },
+    description: { fontSize: 12, lineHeight: 16, marginBottom: 8, height: 30, textAlignVertical: 'top' },
+    recipeStats: { flexDirection: "row", justifyContent: "space-between", marginBottom: 10, height: 20, bottom: 8 },
 });

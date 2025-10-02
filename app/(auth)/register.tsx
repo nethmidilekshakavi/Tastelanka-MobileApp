@@ -16,16 +16,19 @@ import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { register } from "@/services/authService";
-import { uploadImageToCloudinary } from "@/services/cloudinaryService"; // import cloudinary function
+import { uploadImageToCloudinary } from "@/services/cloudinaryService";
 
 const Register = () => {
     const router = useRouter();
 
-    const [fullName, setFullName] = useState<string>("");
-    const [email, setEmail] = useState<string>("");
-    const [password, setPassword] = useState<string>("");
+    const [fullName, setFullName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [profilePic, setProfilePic] = useState<string | null>(null);
-    const [isLoadingReg, setIsLoadingReg] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Google login hook
+    const { request, response, promptAsync, handleGoogleLogin } = useGoogleLogin();
 
     useEffect(() => {
         (async () => {
@@ -36,6 +39,25 @@ const Register = () => {
         })();
     }, []);
 
+    // Handle Google login response
+    useEffect(() => {
+        if (response?.type === "success") {
+            (async () => {
+                setIsLoading(true);
+                const user = await handleGoogleLogin();
+                setIsLoading(false);
+
+                if (user) {
+                    Alert.alert("Success", "Account created successfully!", [
+                        { text: "OK", onPress: () => router.push("/(tabs)") },
+                    ]);
+                } else {
+                    Alert.alert("Error", "Google sign-in failed");
+                }
+            })();
+        }
+    }, [response]);
+
     const handlePickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -43,7 +65,6 @@ const Register = () => {
             aspect: [1, 1],
             quality: 0.7,
         });
-
         if (!result.canceled && result.assets.length > 0) {
             setProfilePic(result.assets[0].uri);
         }
@@ -55,7 +76,6 @@ const Register = () => {
             return;
         }
 
-        // Email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email.trim())) {
             Alert.alert("Invalid email", "Enter a valid email address");
@@ -67,36 +87,33 @@ const Register = () => {
             return;
         }
 
-        setIsLoadingReg(true);
+        setIsLoading(true);
 
         try {
             let uploadedUrl: string | null = null;
             if (profilePic) {
                 uploadedUrl = await uploadImageToCloudinary(profilePic);
-                if (!uploadedUrl) {
-                    Alert.alert("Image upload failed", "Using default profile picture");
-                }
             }
 
-            const user = await register(
-                fullName.trim(),
-                email.trim(),
-                password,
-                uploadedUrl || null
-            );
+            await register(fullName.trim(), email.trim(), password, uploadedUrl || null);
 
             Alert.alert("Success", "Account created successfully!", [
-                { text: "OK", onPress: () => router.push("/(auth)/login") },
+                { text: "OK", onPress: () => router.push("...//(auth)/login") },
             ]);
         } catch (err: any) {
-            console.error("Registration error:", err);
             Alert.alert("Registration failed", err.message || "Something went wrong");
         } finally {
-            setIsLoadingReg(false);
+            setIsLoading(false);
         }
     };
 
-    const removeProfilePic = () => setProfilePic(null);
+    const handleGoogleSignUp = async () => {
+        try {
+            await promptAsync();
+        } catch (error) {
+            Alert.alert("Error", "Failed to initiate Google sign-in");
+        }
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -109,12 +126,30 @@ const Register = () => {
                     <Text style={styles.subtitle}>Join TasteLanka today!</Text>
                 </View>
 
+                {/* Google Sign Up Button */}
+                <TouchableOpacity
+                    style={styles.googleButton}
+                    onPress={handleGoogleSignUp}
+                    disabled={!request || isLoading}
+                >
+                    <Icon name="login" size={20} color="#4285F4" />
+                    <Text style={styles.googleButtonText}>Sign up with Google</Text>
+                </TouchableOpacity>
+
+                {/* Divider */}
+                <View style={styles.dividerContainer}>
+                    <View style={styles.divider} />
+                    <Text style={styles.dividerText}>OR</Text>
+                    <View style={styles.divider} />
+                </View>
+
+                {/* Profile Pic */}
                 <View style={styles.profileSection}>
                     <TouchableOpacity style={styles.imageContainer} onPress={handlePickImage}>
                         {profilePic ? (
                             <View style={styles.imageWrapper}>
                                 <Image source={{ uri: profilePic }} style={styles.profileImage} />
-                                <TouchableOpacity style={styles.removeButton} onPress={removeProfilePic}>
+                                <TouchableOpacity style={styles.removeButton} onPress={() => setProfilePic(null)}>
                                     <Icon name="close" size={16} color="#fff" />
                                 </TouchableOpacity>
                             </View>
@@ -125,103 +160,115 @@ const Register = () => {
                             </View>
                         )}
                     </TouchableOpacity>
-                    <Text style={styles.imageHint}>
-                        {profilePic ? "Tap to change" : "Optional - Add your photo"}
-                    </Text>
+                    <Text style={styles.imageHint}>{profilePic ? "Tap to change" : "Optional - Add your photo"}</Text>
                 </View>
 
+                {/* Form */}
                 <View style={styles.formContainer}>
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.inputLabel}>Full Name *</Text>
-                        <TextInput
-                            style={styles.textInput}
-                            placeholder="Enter your full name"
-                            placeholderTextColor="#9CA3AF"
-                            value={fullName}
-                            onChangeText={setFullName}
-                            autoCapitalize="words"
-                        />
-                    </View>
-
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.inputLabel}>Email Address *</Text>
-                        <TextInput
-                            style={styles.textInput}
-                            placeholder="Enter your email"
-                            placeholderTextColor="#9CA3AF"
-                            value={email}
-                            onChangeText={setEmail}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                        />
-                    </View>
-
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.inputLabel}>Password *</Text>
-                        <TextInput
-                            style={styles.textInput}
-                            placeholder="Enter your password (min 6 characters)"
-                            placeholderTextColor="#9CA3AF"
-                            secureTextEntry
-                            value={password}
-                            onChangeText={setPassword}
-                            autoCapitalize="none"
-                        />
-                    </View>
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="Full Name"
+                        value={fullName}
+                        onChangeText={setFullName}
+                    />
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="Email"
+                        value={email}
+                        onChangeText={setEmail}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                    />
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="Password"
+                        secureTextEntry
+                        value={password}
+                        onChangeText={setPassword}
+                    />
                 </View>
 
-                <TouchableOpacity
-                    style={[styles.registerButton, isLoadingReg && styles.disabledButton]}
-                    onPress={handleRegister}
-                    disabled={isLoadingReg}
-                >
-                    {isLoadingReg ? (
-                        <View style={styles.loadingContainer}>
-                            <ActivityIndicator color="#fff" size="small" />
-                            <Text style={styles.buttonText}>Creating Account...</Text>
-                        </View>
-                    ) : (
-                        <Text style={styles.buttonText}>Create Account</Text>
-                    )}
+                <TouchableOpacity style={styles.registerButton} onPress={handleRegister} disabled={isLoading}>
+                    {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Create Account</Text>}
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => router.push("/(auth)/login")} style={styles.loginLink}>
-                    <Text style={styles.loginText}>
-                        Already have an account? <Text style={styles.loginTextBold}>Sign In</Text>
-                    </Text>
-                </TouchableOpacity>
+                {/* Login Link */}
+                <View style={styles.loginLinkContainer}>
+                    <Text style={styles.loginLinkText}>Already have an account? </Text>
+                    <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+                        <Text style={styles.loginLink}>Log in</Text>
+                    </TouchableOpacity>
+                </View>
             </ScrollView>
         </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#F8FAFC", top: 50 },
-    scrollContainer: { flexGrow: 1, paddingHorizontal: 20, paddingBottom: 30 },
-    header: { alignItems: "center", paddingTop: 20, paddingBottom: 30 },
-    backButton: { position: "absolute", left: 0, top: 20, padding: 10 },
-    title: { fontSize: 28, fontWeight: "bold", color: "#1F2937", marginBottom: 8 },
+    container: { flex: 1, backgroundColor: "#F8FAFC" },
+    scrollContainer: { padding: 20 },
+    header: { alignItems: "center", marginBottom: 30 },
+    backButton: { position: "absolute", left: 0, top: 0 },
+    title: { fontSize: 28, fontWeight: "bold" },
     subtitle: { fontSize: 16, color: "#6B7280" },
+    googleButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#fff",
+        padding: 14,
+        borderRadius: 12,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+        gap: 10,
+    },
+    googleButtonText: {
+        color: "#1F2937",
+        fontWeight: "600",
+        fontSize: 16,
+    },
+    dividerContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 20,
+    },
+    divider: {
+        flex: 1,
+        height: 1,
+        backgroundColor: "#E5E7EB",
+    },
+    dividerText: {
+        marginHorizontal: 10,
+        color: "#9CA3AF",
+        fontSize: 14,
+    },
     profileSection: { alignItems: "center", marginBottom: 30 },
-    imageContainer: { width: 120, height: 120, borderRadius: 60, overflow: "hidden", marginBottom: 12 },
+    imageContainer: { width: 120, height: 120, borderRadius: 60, overflow: "hidden" },
     imageWrapper: { width: "100%", height: "100%", position: "relative" },
     profileImage: { width: "100%", height: "100%" },
     removeButton: { position: "absolute", top: 8, right: 8, backgroundColor: "#EF4444", borderRadius: 12, width: 24, height: 24, justifyContent: "center", alignItems: "center" },
-    placeholderContainer: { width: "100%", height: "100%", backgroundColor: "#F3F4F6", justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#E5E7EB", borderStyle: "dashed" },
-    placeholderText: { color: "#9CA3AF", fontSize: 14, marginTop: 8 },
-    imageHint: { color: "#6B7280", fontSize: 12, textAlign: "center" },
-    formContainer: { marginBottom: 30 },
-    inputGroup: { marginBottom: 20 },
-    inputLabel: { fontSize: 14, fontWeight: "600", color: "#374151", marginBottom: 8 },
-    textInput: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#D1D5DB", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, color: "#1F2937" },
-    registerButton: { backgroundColor: "#4CAF50", paddingVertical: 16, borderRadius: 12, marginBottom: 20, shadowColor: "#4CAF50", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8 },
-    disabledButton: { opacity: 0.7 },
-    loadingContainer: { flexDirection: "row", justifyContent: "center", alignItems: "center" },
-    buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold", textAlign: "center", marginLeft: 8 },
-    loginLink: { alignItems: "center" },
-    loginText: { color: "#6B7280", fontSize: 16 },
-    loginTextBold: { color: "#4CAF50", fontWeight: "600" },
+    placeholderContainer: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#F3F4F6" },
+    placeholderText: { color: "#9CA3AF" },
+    imageHint: { color: "#6B7280", fontSize: 12, textAlign: "center", marginTop: 8 },
+    formContainer: { marginBottom: 20 },
+    textInput: { backgroundColor: "#fff", padding: 12, marginBottom: 16, borderRadius: 8 },
+    registerButton: { backgroundColor: "#4CAF50", padding: 16, borderRadius: 12, alignItems: "center" },
+    buttonText: { color: "#fff", fontWeight: "bold" },
+    loginLinkContainer: {
+        flexDirection: "row",
+        justifyContent: "center",
+        marginTop: 20,
+    },
+    loginLinkText: {
+        color: "#6B7280",
+        fontSize: 14,
+    },
+    loginLink: {
+        color: "#4CAF50",
+        fontSize: 14,
+        fontWeight: "600",
+    },
 });
 
 export default Register;
